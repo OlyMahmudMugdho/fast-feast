@@ -114,6 +114,9 @@ function ShopMenuContent() {
                           <Text type="secondary">{item.description}</Text>
                           <div style={{ marginTop: 8 }}>
                             <Text strong style={{ fontSize: 16 }}>${item.price}</Text>
+                            <Link href={`/buyer/item?id=${item.id}`} style={{ marginLeft: 16 }}>
+                              <Button type="link" size="small">Details</Button>
+                            </Link>
                           </div>
                         </Col>
                         <Col>

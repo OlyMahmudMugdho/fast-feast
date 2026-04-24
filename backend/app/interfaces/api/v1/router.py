@@ -7,4 +7,4 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(shops.router, prefix="/shops", tags=["shops"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
-api_router.include_router(public.router, tags=["public"])
+api_router.include_router(public.router) # Prefix is now inside the router

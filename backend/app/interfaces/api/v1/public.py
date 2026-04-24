@@ -1,19 +1,47 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
+from sqlalchemy.orm import selectinload
 from app.infrastructure.db import get_session
 from app.domain.models import Shop, Category, FoodItem, ShopStatus
 from app.interfaces.api.schemas import ShopPublicResponse, CategoryResponse, FoodItemResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
 
-router = APIRouter()
+router = APIRouter(prefix="/public", tags=["public"])
 
 @router.get("/shops", response_model=List[ShopPublicResponse])
 async def list_shops(
     session: AsyncSession = Depends(get_session)
 ):
     result = await session.exec(select(Shop).where(Shop.status == ShopStatus.APPROVED))
+    return result.all()
+
+@router.get("/items", response_model=List[FoodItemResponse])
+async def list_all_items(
+    session: AsyncSession = Depends(get_session)
+):
+    # Join with Shop to ensure we only get items from approved shops
+    statement = (
+        select(FoodItem)
+        .join(Shop)
+        .where(Shop.status == ShopStatus.APPROVED, FoodItem.is_available == True)
+    )
+    result = await session.exec(statement)
+    return result.all()
+
+@router.get("/categories", response_model=List[str])
+async def list_all_categories(
+    session: AsyncSession = Depends(get_session)
+):
+    # Get unique category names from approved shops
+    statement = (
+        select(Category.name)
+        .join(Shop)
+        .where(Shop.status == ShopStatus.APPROVED)
+        .distinct()
+    )
+    result = await session.exec(statement)
     return result.all()
 
 @router.get("/shops/{shop_id}/categories", response_model=List[CategoryResponse])

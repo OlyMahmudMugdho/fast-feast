@@ -49,8 +49,7 @@ class ShopBase(SQLModel):
     name: str
     address: str
     status: ShopStatus = Field(default=ShopStatus.PENDING)
-    logo_url: Optional[str] = None
-    # Stripe fields kept but optional/unused for CoD
+    logo_url: Optional[str] = Field(default="https://picsum.photos/seed/shop/200/200")
     stripe_account_id: Optional[str] = Field(default=None, unique=True)
     stripe_onboarded: bool = Field(default=False)
 
@@ -79,7 +78,7 @@ class FoodItem(SQLModel, table=True):
     name: str
     description: str
     price: Decimal = Field(default=0, max_digits=10, decimal_places=2)
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(default="https://picsum.photos/seed/food/400/300")
     is_available: bool = Field(default=True)
     shop_id: UUID = Field(foreign_key="shop.id")
     category_id: UUID = Field(foreign_key="category.id")
