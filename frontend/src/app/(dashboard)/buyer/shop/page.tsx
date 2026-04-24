@@ -24,8 +24,8 @@ function ShopMenuContent() {
       setLoading(true);
       try {
         const [catRes, itemRes] = await Promise.all([
-          api.get(`/shops/${shop_id}/categories`),
-          api.get(`/shops/${shop_id}/items`)
+          api.get(`/public/shops/${shop_id}/categories`),
+          api.get(`/public/shops/${shop_id}/items`)
         ]);
         setCategories(catRes.data);
         setItems(itemRes.data);
