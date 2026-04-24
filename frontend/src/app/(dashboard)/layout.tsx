@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Typography, Space, Dropdown, Avatar, Drawer } from 'antd';
+import { Layout, Menu, Button, Typography, Space, Dropdown, Avatar, Drawer, Badge } from 'antd';
 import {
   DashboardOutlined,
   ShopOutlined,
@@ -12,10 +12,12 @@ import {
   MenuFoldOutlined,
   TeamOutlined,
   LoginOutlined,
-  HomeOutlined
+  HomeOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useCart } from '@/lib/CartContext';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -28,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [role, setRole] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { cart, setIsOpen } = useCart();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -147,6 +150,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             style={{ fontSize: '18px', width: 64, height: 64 }}
           />
           <Space size="middle">
+            <Badge count={cart.length} showZero offset={[0, 0]}>
+              <Button 
+                type="text" 
+                icon={<ShoppingCartOutlined style={{ fontSize: 20 }} />} 
+                onClick={() => setIsOpen(true)}
+              />
+            </Badge>
             {role ? (
               <Dropdown
                 menu={{

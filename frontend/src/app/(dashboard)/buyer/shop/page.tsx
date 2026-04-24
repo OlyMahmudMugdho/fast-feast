@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { Layout, Typography, Row, Col, Card, Button, List, message, Spin, Space, Divider } from 'antd';
-import { ShoppingCartOutlined, ArrowLeftOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined, ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
 import api from '@/lib/api';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useCart } from '@/lib/CartContext';
 
 const { Title, Text } = Typography;
 
@@ -16,7 +17,7 @@ function ShopMenuContent() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
-  const [cart, setCart] = useState<any[]>([]);
+  const { addToCart } = useCart();
   
   useEffect(() => {
     const fetchMenu = async () => {
@@ -38,56 +39,19 @@ function ShopMenuContent() {
     fetchMenu();
   }, [shop_id]);
 
-  const addToCart = (item: any) => {
-    const existing = cart.find(i => i.id === item.id);
-    if (existing) {
-      setCart(cart.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
-    message.success(`${item.name} added to cart`);
-  };
-
-  const removeFromCart = (itemId: string) => {
-    const existing = cart.find(i => i.id === itemId);
-    if (existing.quantity > 1) {
-      setCart(cart.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i));
-    } else {
-      setCart(cart.filter(i => i.id !== itemId));
-    }
-  };
-
-  const calculateTotal = () => {
-    return cart.reduce((acc, curr) => acc + (parseFloat(curr.price) * curr.quantity), 0).toFixed(2);
-  };
-
-  const handleCheckout = async () => {
-    try {
-      const orderData = {
-        shop_id: shop_id,
-        delivery_address: "Default Address",
-        items: cart.map(i => ({ food_item_id: i.id, quantity: i.quantity }))
-      };
-      await api.post('/orders', orderData);
-      message.success('Order placed successfully!');
-      setCart([]);
-      router.push('/buyer/orders');
-    } catch (error) {
-      message.error('Failed to place order');
-    }
-  };
-
   if (loading && shop_id) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" /></div>;
   if (!shop_id) return <div style={{ textAlign: 'center', padding: '100px' }}><Text>No shop selected</Text></div>;
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-      <Link href="/buyer/dashboard">
-        <Button icon={<ArrowLeftOutlined />} style={{ marginBottom: 24 }}>Back to Shops</Button>
-      </Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Link href="/buyer/dashboard">
+          <Button icon={<ArrowLeftOutlined />}>Back to Shops</Button>
+        </Link>
+      </div>
       
-      <Row gutter={32}>
-        <Col xs={24} lg={16}>
+      <Row justify="center">
+        <Col xs={24} md={20} lg={16}>
           <Title level={2}>Menu</Title>
           {categories.map((cat: any) => (
             <div key={cat.id} style={{ marginBottom: 40 }}>
@@ -96,7 +60,7 @@ function ShopMenuContent() {
               <Row gutter={[16, 16]}>
                 {items.filter((i: any) => i.category_id === cat.id).map((item: any) => (
                   <Col span={24} key={item.id}>
-                    <Card style={{ borderRadius: 12 }}>
+                    <Card hoverable style={{ borderRadius: 12 }}>
                       <Row align="middle" gutter={16}>
                         <Col flex="100px">
                           <div style={{ 
@@ -134,50 +98,6 @@ function ShopMenuContent() {
               </Row>
             </div>
           ))}
-        </Col>
-        
-        <Col xs={24} lg={8}>
-          <Card 
-            title={<Space><ShoppingCartOutlined /> Your Cart</Space>}
-            style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', position: 'sticky', top: 100 }}
-          >
-            {cart.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                <Text type="secondary">Your cart is empty</Text>
-              </div>
-            ) : (
-              <>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={cart}
-                  renderItem={(item: any) => (
-                    <List.Item
-                      actions={[
-                        <Space key="actions">
-                          <Button size="small" icon={<MinusOutlined />} onClick={() => removeFromCart(item.id)} />
-                          <Text>{item.quantity}</Text>
-                          <Button size="small" icon={<PlusOutlined />} onClick={() => addToCart(item)} />
-                        </Space>
-                      ]}
-                    >
-                      <List.Item.Meta
-                        title={item.name}
-                        description={`$${(item.price * item.quantity).toFixed(2)}`}
-                      />
-                    </List.Item>
-                  )}
-                />
-                <Divider />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <Title level={4}>Total</Title>
-                  <Title level={4} style={{ color: '#ff4d4f' }}>${calculateTotal()}</Title>
-                </div>
-                <Button type="primary" size="large" block onClick={handleCheckout}>
-                  Checkout (CoD)
-                </Button>
-              </>
-            )}
-          </Card>
         </Col>
       </Row>
     </div>

@@ -14,10 +14,12 @@ import {
   TwitterOutlined,
   InstagramOutlined,
   YoutubeOutlined,
-  MenuOutlined
+  MenuOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { useCart } from '@/lib/CartContext';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph, Text } = Typography;
@@ -27,6 +29,7 @@ export default function LandingPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { cart, setIsOpen } = useCart();
 
   useEffect(() => {
     const fetchLandingData = async () => {
@@ -37,6 +40,8 @@ export default function LandingPage() {
           api.get('/public/items'),
           api.get('/public/categories')
         ]);
+        // Limit to 6 or 9 or 12 to ensure even rows depending on grid config
+        // Using 6 items with a 3-column grid (lg={8}) or 4-column (lg={6})
         setItems(itemsRes.data.slice(0, 12));
         setCategories(catsRes.data);
       } catch (err: any) {
@@ -70,7 +75,14 @@ export default function LandingPage() {
             Fast-Feast
           </Title>
         </div>
-        <Space size="middle" className="nav-links">
+        <Space size="middle">
+          <Badge count={cart.length} showZero offset={[0, 0]}>
+            <Button 
+              type="text" 
+              icon={<ShoppingCartOutlined style={{ fontSize: 20 }} />} 
+              onClick={() => setIsOpen(true)}
+            />
+          </Badge>
           <Link href="/buyer/dashboard" className="hide-mobile"><Button type="text">Browse</Button></Link>
           <Link href="/login"><Button type="text">Login</Button></Link>
           <Link href="/register/buyer"><Button type="primary" shape="round">Sign Up</Button></Link>
@@ -111,14 +123,16 @@ export default function LandingPage() {
         </div>
 
         {/* Categories Section */}
-        <div style={{ padding: '30px 20px', background: '#fff', textAlign: 'center', overflowX: 'auto' }}>
-          <Space size={[12, 12]} wrap style={{ justifyContent: 'center' }}>
-            {categories.map((cat) => (
-              <Tag key={cat} color="red" style={{ padding: '6px 20px', fontSize: 14, borderRadius: 20, cursor: 'pointer', margin: '4px' }}>
-                {cat}
-              </Tag>
-            ))}
-          </Space>
+        <div style={{ padding: '30px 20px', background: '#fff', textAlign: 'center' }}>
+          {categories.length > 0 && (
+            <Space size={[12, 12]} wrap style={{ justifyContent: 'center' }}>
+              {categories.map((cat) => (
+                <Tag key={cat} color="red" style={{ padding: '6px 20px', fontSize: 14, borderRadius: 20, cursor: 'pointer', margin: '4px' }}>
+                  {cat}
+                </Tag>
+              ))}
+            </Space>
+          )}
         </div>
 
         {/* Featured Dishes Section */}
@@ -135,66 +149,73 @@ export default function LandingPage() {
               <Alert message={error} type="error" showIcon action={<Button size="small" onClick={() => window.location.reload()}>Retry</Button>} />
             </div>
           ) : (
-            <Row gutter={[24, 24]}>
+            <Row gutter={[32, 32]} justify="start" align="stretch">
               {items.map((item) => (
-                <Col xs={24} sm={12} lg={8} xl={6} key={item.id}>
+                <Col xs={24} sm={12} lg={8} key={item.id}>
                   <Card 
                     hoverable 
                     cover={
                       <div style={{ 
-                        height: 180, 
+                        height: 220, 
                         backgroundImage: item.image_url ? `url(${item.image_url})` : 'none',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundColor: '#fafafa'
                       }} />
                     }
-                    style={{ borderRadius: 12, overflow: 'hidden', height: '100%' }}
-                    bodyStyle={{ padding: '16px' }}
+                    style={{ borderRadius: 16, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}
+                    bodyStyle={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <Title level={5} style={{ margin: 0, fontSize: 17 }} ellipsis={{ rows: 1 }}>{item.name}</Title>
-                      <Text strong style={{ fontSize: 16, color: '#ff4d4f', whiteSpace: 'nowrap', marginLeft: 8 }}>${item.price}</Text>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                      <Title level={4} style={{ margin: 0, fontSize: 18 }} ellipsis={{ rows: 1 }}>{item.name}</Title>
+                      <Text strong style={{ fontSize: 18, color: '#ff4d4f', whiteSpace: 'nowrap', marginLeft: 8 }}>${item.price}</Text>
                     </div>
-                    <Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ fontSize: 13, marginBottom: 16, height: 40 }}>
+                    <Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ fontSize: 14, marginBottom: 20, flex: 1 }}>
                       {item.description}
                     </Paragraph>
-                    <Link href={`/buyer/item?id=${item.id}`}>
-                      <Button type="link" style={{ padding: 0 }} icon={<ArrowRightOutlined />}>View Details</Button>
-                    </Link>
+                    <div style={{ marginTop: 'auto' }}>
+                      <Link href={`/buyer/item?id=${item.id}`}>
+                        <Button type="primary" block shape="round" icon={<ArrowRightOutlined />}>View Details</Button>
+                      </Link>
+                    </div>
                   </Card>
                 </Col>
               ))}
+              {items.length === 0 && (
+                <Col span={24} style={{ textAlign: 'center' }}>
+                  <Text type="secondary">No dishes available at the moment.</Text>
+                </Col>
+              )}
             </Row>
           )}
           
-          <div style={{ textAlign: 'center', marginTop: 48 }}>
+          <div style={{ textAlign: 'center', marginTop: 64 }}>
             <Link href="/buyer/dashboard">
-              <Button size="large" shape="round" style={{ padding: '0 40px' }}>Browse All Foods</Button>
+              <Button size="large" shape="round" style={{ padding: '0 60px', height: 50, fontSize: 16 }}>Browse All Marketplace</Button>
             </Link>
           </div>
         </div>
 
         {/* Features Section */}
-        <div style={{ padding: '60px 20px', background: '#fafafa' }}>
-          <Row gutter={[32, 32]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ padding: '80px 20px', background: '#fafafa' }}>
+          <Row gutter={[32, 48]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
             <Col xs={24} sm={12} md={8}>
               <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <ThunderboltOutlined style={{ fontSize: '40px', color: '#ff4d4f', marginBottom: '20px' }} />
+                <ThunderboltOutlined style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '24px' }} />
                 <Title level={4}>Lightning Fast</Title>
                 <Paragraph>Food arrives while it's still steaming hot and fresh.</Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={8}>
               <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <SafetyCertificateOutlined style={{ fontSize: '40px', color: '#ff4d4f', marginBottom: '20px' }} />
+                <SafetyCertificateOutlined style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '24px' }} />
                 <Title level={4}>Verified Shops</Title>
                 <Paragraph>Every partner is verified for quality and hygiene standards.</Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={8}>
               <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <GlobalOutlined style={{ fontSize: '40px', color: '#ff4d4f', marginBottom: '20px' }} />
+                <GlobalOutlined style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '24px' }} />
                 <Title level={4}>Local Support</Title>
                 <Paragraph>Supporting local vendors with advanced business tools.</Paragraph>
               </Card>
@@ -211,7 +232,7 @@ export default function LandingPage() {
               <Paragraph style={{ color: 'rgba(255,255,255,0.45)', maxWidth: 300 }}>
                 The premium multi-vendor food selling platform connecting the best local chefs with hungry customers.
               </Paragraph>
-              <Space size="large" style={{ fontSize: 20, marginTop: 16 }}>
+              <Space size="large" style={{ fontSize: 24, marginTop: 16 }}>
                 <FacebookOutlined style={{ cursor: 'pointer' }} />
                 <TwitterOutlined style={{ cursor: 'pointer' }} />
                 <InstagramOutlined style={{ cursor: 'pointer' }} />
@@ -267,6 +288,9 @@ export default function LandingPage() {
         @media (max-width: 576px) {
           .hide-mobile {
             display: none !important;
+          }
+          .ant-layout-header {
+            padding: 0 12px !important;
           }
         }
       `}</style>

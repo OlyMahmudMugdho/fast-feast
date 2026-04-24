@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/AntdRegistry";
 import { ConfigProvider } from "antd";
+import { CartProvider } from "@/lib/CartContext";
+import CartSidebar from "@/app/components/CartSidebar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,12 +25,15 @@ export default function RootLayout({
           <ConfigProvider
             theme={{
               token: {
-                colorPrimary: "#ff4d4f", // A professional food-related red
+                colorPrimary: "#ff4d4f",
                 borderRadius: 8,
               },
             }}
           >
-            {children}
+            <CartProvider>
+              {children}
+              <CartSidebar />
+            </CartProvider>
           </ConfigProvider>
         </StyledComponentsRegistry>
       </body>
