@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message, Layout } from 'antd';
-import { UserOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Typography, message, Layout, Row, Col, Divider, Checkbox, Space } from 'antd';
+import { UserOutlined, LockOutlined, ArrowLeftOutlined, GoogleOutlined, GithubOutlined } from '@ant-design/icons';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -22,9 +22,8 @@ export default function LoginPage() {
       localStorage.setItem('token', access_token);
       localStorage.setItem('role', role);
       
-      message.success('Login successful!');
+      message.success('Welcome back!');
       
-      // Redirect based on role
       if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
         router.push('/admin/dashboard');
       } else if (role === 'SHOP_OWNER' || role === 'SHOP_EMPLOYEE') {
@@ -40,54 +39,97 @@ export default function LoginPage() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5' }}>
-      <div style={{ position: 'absolute', top: 20, left: 20 }}>
-        <Link href="/">
-          <Button icon={<ArrowLeftOutlined />} type="text">Back to Home</Button>
-        </Link>
-      </div>
-      
-      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderRadius: 12 }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2} style={{ color: '#ff4d4f', margin: 0 }}>Fast-Feast</Title>
-          <Text type="secondary">Login to your account</Text>
-        </div>
-
-        <Form
-          name="login"
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
-          layout="vertical"
-          size="large"
-        >
-          <Form.Item
-            name="email"
-            rules={[{ required: true, message: 'Please input your Email!', type: 'email' }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Email" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Please input your Password!' }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block style={{ height: 45 }}>
-              Log in
-            </Button>
-          </Form.Item>
+    <Layout style={{ minHeight: '100vh', background: '#fff' }}>
+      <Row style={{ minHeight: '100vh' }}>
+        {/* Left Side: Illustration/Image */}
+        <Col xs={0} md={12} lg={14} style={{ 
+          background: 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1000&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '60px'
+        }}>
+          <Title style={{ color: '#fff', fontSize: '48px', fontWeight: 800, marginBottom: '24px' }}>
+            Delicious food is<br /> just a click away.
+          </Title>
+          <Paragraph style={{ color: 'rgba(255,255,255,0.8)', fontSize: '18px', maxWidth: '500px' }}>
+            Join our community of food lovers and local vendors. Experience the fastest delivery and the best flavors in town.
+          </Paragraph>
           
-          <div style={{ textAlign: 'center' }}>
-            <Text type="secondary">Don't have an account? </Text>
-            <Link href="/register/buyer">Register as Buyer</Link>
-            <div style={{ marginTop: 8 }}>
-               <Link href="/register/shop" style={{ color: '#666' }}>Interested in selling? Join as Shop</Link>
+          <div style={{ marginTop: 'auto' }}>
+            <Text style={{ color: '#fff', opacity: 0.7 }}>© 2026 Fast-Feast Platform</Text>
+          </div>
+        </Col>
+
+        {/* Right Side: Form */}
+        <Col xs={24} md={12} lg={10} style={{ display: 'flex', flexDirection: 'column', padding: '40px' }}>
+          <div style={{ marginBottom: 'auto' }}>
+             <Link href="/">
+              <Button icon={<ArrowLeftOutlined />} type="text">Home</Button>
+            </Link>
+          </div>
+
+          <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto', paddingBottom: '100px' }}>
+            <div style={{ marginBottom: '40px' }}>
+              <Title level={2} style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 800 }}>Sign In</Title>
+              <Text type="secondary" style={{ fontSize: '16px' }}>Enter your credentials to access your account</Text>
+            </div>
+
+            <Form
+              name="login"
+              onFinish={onFinish}
+              layout="vertical"
+              size="large"
+              initialValues={{ remember: true }}
+            >
+              <Form.Item
+                name="email"
+                rules={[{ required: true, message: 'Email is required!', type: 'email' }]}
+              >
+                <Input prefix={<UserOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />} placeholder="Email Address" style={{ borderRadius: '8px' }} />
+              </Form.Item>
+              
+              <Form.Item
+                name="password"
+                rules={[{ required: true, message: 'Password is required!' }]}
+              >
+                <Input.Password prefix={<LockOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />} placeholder="Password" style={{ borderRadius: '8px' }} />
+              </Form.Item>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <Form.Item name="remember" valuePropName="checked" noStyle>
+                  <Checkbox>Remember me</Checkbox>
+                </Form.Item>
+                <Link href="#" style={{ color: '#ff4d4f' }}>Forgot password?</Link>
+              </div>
+
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={loading} block style={{ height: '50px', borderRadius: '8px', fontWeight: 600, fontSize: '16px' }}>
+                  Sign In
+                </Button>
+              </Form.Item>
+            </Form>
+
+            <Divider plain><Text type="secondary">or continue with</Text></Divider>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Button block icon={<GoogleOutlined />} style={{ borderRadius: '8px' }}>Google</Button>
+              </Col>
+              <Col span={12}>
+                <Button block icon={<GithubOutlined />} style={{ borderRadius: '8px' }}>GitHub</Button>
+              </Col>
+            </Row>
+
+            <div style={{ textAlign: 'center', marginTop: '40px' }}>
+              <Text type="secondary">New to Fast-Feast? </Text>
+              <Link href="/register/buyer" style={{ fontWeight: 600, color: '#ff4d4f' }}>Create an account</Link>
             </div>
           </div>
-        </Form>
-      </Card>
+        </Col>
+      </Row>
     </Layout>
   );
 }
