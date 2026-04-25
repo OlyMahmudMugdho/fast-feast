@@ -16,7 +16,14 @@ async def get_public_shops(session: AsyncSession = Depends(get_session)):
 
 @router.get("/categories", response_model=List[CategoryResponse])
 async def get_public_categories(session: AsyncSession = Depends(get_session)):
+    """Fetch all categories globally."""
     result = await session.exec(select(Category))
+    return result.all()
+
+@router.get("/shops/{shop_id}/categories", response_model=List[CategoryResponse])
+async def get_shop_categories(shop_id: UUID, session: AsyncSession = Depends(get_session)):
+    """Fetch categories for a specific shop (Public)."""
+    result = await session.exec(select(Category).where(Category.shop_id == shop_id))
     return result.all()
 
 @router.get("/shops/{shop_id}/items", response_model=List[FoodItemResponse])

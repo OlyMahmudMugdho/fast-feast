@@ -1,17 +1,16 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import select
 from app.infrastructure.db import get_session
-from app.domain.models import Shop, User, UserRole, Category, FoodItem
+from app.domain.models import Shop, Category, FoodItem, User, UserRole
 from app.interfaces.api.schemas import (
-    ShopResponseSchema, UserResponseSchema, BuyerRegisterSchema,
-    CategoryCreate, CategoryResponse, FoodItemResponse
+    ShopResponseSchema, CategoryCreate, CategoryResponse, 
+    FoodItemCreate, FoodItemResponse, VerificationSchema, UserResponseSchema
 )
 from app.interfaces.api.deps import get_current_user, RoleChecker
 from app.infrastructure.media import upload_image
 from app.infrastructure.stripe_client import stripeClient
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.core.security import get_password_hash
 from decimal import Decimal
 from uuid import UUID
 import logging
@@ -43,35 +42,8 @@ async def create_food_item(
     session: AsyncSession = Depends(get_session)
 ):
     shop = await get_user_shop(current_user, session)
-    
-    # Verify category
-    cat_result = await session.exec(select(Category).where(Category.id == category_id, Category.shop_id == shop.id))
-    if not cat_result.first():
-        raise HTTPException(status_code=400, detail="Invalid category")
-
-    # Upload to Cloudinary
     image_url = await upload_image(image.file, folder=f"shops/{shop.id}/items")
     
-    # 1. Sync with Stripe if shop is onboarded
-    stripe_product_id = None
-    if shop.stripe_account_id:
-        try:
-            # Pass connected account header
-            product = stripeClient.products.create(
-                {
-                    "name": name,
-                    "description": description,
-                    "default_price_data": {
-                        "unit_amount": int(price * 100),
-                        "currency": "usd",
-                    },
-                },
-                {"stripe_account": shop.stripe_account_id}
-            )
-            stripe_product_id = product.id
-        except Exception as e:
-            logging.warning(f"Stripe product sync failed: {e}")
-
     item = FoodItem(
         name=name,
         description=description,
@@ -81,34 +53,52 @@ async def create_food_item(
         image_url=image_url,
         shop_id=shop.id
     )
-    # Note: Added stripe_product_id if we want to store it, but for this demo 
-    # we'll create checkout sessions using ad-hoc price data.
     
     session.add(item)
     await session.commit()
     await session.refresh(item)
     return item
 
-# ... (rest of the endpoints unchanged)
-@router.get("/me", response_model=ShopResponseSchema)
-async def get_my_shop(
-    current_user: User = Depends(shop_access_check),
-    session: AsyncSession = Depends(get_session)
-):
-    return await get_user_shop(current_user, session)
-
-@router.post("/me/categories", response_model=CategoryResponse)
-async def create_category(
-    data: CategoryCreate,
+@router.patch("/me/items/{item_id}", response_model=FoodItemResponse)
+async def update_food_item(
+    item_id: UUID,
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    price: Optional[Decimal] = Form(None),
+    category_id: Optional[UUID] = Form(None),
+    is_available: Optional[bool] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(shop_access_check),
     session: AsyncSession = Depends(get_session)
 ):
     shop = await get_user_shop(current_user, session)
-    category = Category(**data.model_dump(), shop_id=shop.id)
-    session.add(category)
+    result = await session.exec(select(FoodItem).where(FoodItem.id == item_id, FoodItem.shop_id == shop.id))
+    item = result.first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    if name is not None: item.name = name
+    if description is not None: item.description = description
+    if price is not None: item.price = price
+    if is_available is not None: item.is_available = is_available
+    if category_id is not None: item.category_id = category_id
+
+    if image is not None:
+        item.image_url = await upload_image(image.file, folder=f"shops/{shop.id}/items")
+
+    session.add(item)
     await session.commit()
-    await session.refresh(category)
-    return category
+    await session.refresh(item)
+    return item
+
+@router.get("/me/employees", response_model=List[UserResponseSchema])
+async def get_shop_employees(
+    current_user: User = Depends(shop_access_check),
+    session: AsyncSession = Depends(get_session)
+):
+    shop = await get_user_shop(current_user, session)
+    result = await session.exec(select(User).where(User.shop_id == shop.id))
+    return result.all()
 
 @router.get("/me/categories", response_model=List[CategoryResponse])
 async def get_my_categories(
@@ -119,6 +109,22 @@ async def get_my_categories(
     result = await session.exec(select(Category).where(Category.shop_id == shop.id))
     return result.all()
 
+@router.post("/me/categories", response_model=CategoryResponse)
+async def create_category(
+    category_in: CategoryCreate,
+    current_user: User = Depends(shop_access_check),
+    session: AsyncSession = Depends(get_session)
+):
+    shop = await get_user_shop(current_user, session)
+    category = Category(
+        **category_in.dict(),
+        shop_id=shop.id
+    )
+    session.add(category)
+    await session.commit()
+    await session.refresh(category)
+    return category
+
 @router.get("/me/items", response_model=List[FoodItemResponse])
 async def get_my_items(
     current_user: User = Depends(shop_access_check),
@@ -128,34 +134,9 @@ async def get_my_items(
     result = await session.exec(select(FoodItem).where(FoodItem.shop_id == shop.id))
     return result.all()
 
-@router.get("/me/employees", response_model=List[UserResponseSchema])
-async def get_shop_employees(
-    current_user: User = Depends(RoleChecker([UserRole.SHOP_OWNER])),
+@router.get("/me", response_model=ShopResponseSchema)
+async def get_my_shop(
+    current_user: User = Depends(shop_access_check),
     session: AsyncSession = Depends(get_session)
 ):
-    shop = await get_user_shop(current_user, session)
-    emp_result = await session.exec(select(User).where(User.shop_id == shop.id))
-    return emp_result.all()
-
-@router.post("/me/employees", response_model=UserResponseSchema)
-async def add_shop_employee(
-    data: BuyerRegisterSchema,
-    current_user: User = Depends(RoleChecker([UserRole.SHOP_OWNER])),
-    session: AsyncSession = Depends(get_session)
-):
-    shop = await get_user_shop(current_user, session)
-    user_exists = await session.exec(select(User).where(User.email == data.email))
-    if user_exists.first():
-        raise HTTPException(status_code=400, detail="User already exists")
-    new_employee = User(
-        email=data.email,
-        full_name=data.full_name,
-        hashed_password=get_password_hash(data.password),
-        role=UserRole.SHOP_EMPLOYEE,
-        shop_id=shop.id,
-        phone=data.phone
-    )
-    session.add(new_employee)
-    await session.commit()
-    await session.refresh(new_employee)
-    return new_employee
+    return await get_user_shop(current_user, session)
