@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.env
+.git/
+.github/
+server.log
+test_*.sh
+seed.sql
+debug_stripe.py
