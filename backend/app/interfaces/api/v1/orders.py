@@ -7,12 +7,16 @@ from app.domain.models import Order, OrderItem, FoodItem, User, UserRole, Shop, 
 from app.interfaces.api.schemas import OrderCreate, OrderResponse, OrderStatusUpdate, StripeOnboardResponse
 from app.interfaces.api.deps import get_current_user, RoleChecker
 from app.core.config import settings
+from app.infrastructure.stripe_client import stripeClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 from decimal import Decimal
 from uuid import UUID
 import stripe
+import logging
 
-stripe.api_key = settings.STRIPE_API_KEY
+# Ensure logging is configured
+logger = logging.getLogger("orders")
+logger.setLevel(logging.INFO)
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -26,20 +30,32 @@ async def onboard_shop(
     if not shop:
         raise HTTPException(status_code=404, detail="Shop not found")
 
-    if not shop.stripe_account_id:
-        account = stripe.Account.create(type="express")
-        shop.stripe_account_id = account.id
-        session.add(shop)
-        await session.commit()
-    
-    account_link = stripe.AccountLink.create(
-        account=shop.stripe_account_id,
-        refresh_url=f"{settings.FRONTEND_URL}/shop/dashboard?onboard=fail",
-        return_url=f"{settings.FRONTEND_URL}/shop/dashboard?onboard=success",
-        type="account_onboarding",
-    )
-    
-    return {"account_link_url": account_link.url}
+    try:
+        # Use V1 API for Express onboarding as per original design
+        if not shop.stripe_account_id:
+            account = stripe.Account.create(api_key=settings.STRIPE_API_KEY, type="express")
+            shop.stripe_account_id = account.id
+            session.add(shop)
+            await session.commit()
+        
+        account_link = stripe.AccountLink.create(
+            api_key=settings.STRIPE_API_KEY,
+            account=shop.stripe_account_id,
+            refresh_url=f"{settings.FRONTEND_URL}/shop/dashboard?onboard=fail",
+            return_url=f"{settings.FRONTEND_URL}/shop/dashboard?onboard=success",
+            type="account_onboarding",
+        )
+        
+        return {"account_link_url": account_link.url}
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Stripe Connect Error: {e}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Stripe Connect is not enabled for this platform. Please enable it in the Stripe Dashboard."
+        )
+    except Exception as e:
+        logger.error(f"Onboarding failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to start Stripe onboarding")
 
 @router.post("", response_model=OrderResponse)
 async def create_order(
@@ -48,12 +64,18 @@ async def create_order(
     session: AsyncSession = Depends(get_session)
 ):
     if current_user.role != UserRole.BUYER:
+        logger.warning(f"Order Denied: User {current_user.id} has role {current_user.role}, not BUYER")
         raise HTTPException(status_code=403, detail="Only buyers can place orders")
 
     shop_result = await session.exec(select(Shop).where(Shop.id == data.shop_id))
     shop = shop_result.first()
-    if not shop or shop.status != "APPROVED":
-        raise HTTPException(status_code=400, detail="Shop not available")
+    if not shop:
+        logger.error(f"Order Failure: Shop {data.shop_id} not found")
+        raise HTTPException(status_code=400, detail="Shop not found")
+        
+    if shop.status != "APPROVED":
+        logger.error(f"Order Failure: Shop {shop.name} is in status {shop.status}, not APPROVED")
+        raise HTTPException(status_code=400, detail="Shop is not currently accepting orders")
 
     total_amount = Decimal(0)
     line_items = []
@@ -63,6 +85,7 @@ async def create_order(
         item_result = await session.exec(select(FoodItem).where(FoodItem.id == item_data.food_item_id, FoodItem.shop_id == data.shop_id))
         food_item = item_result.first()
         if not food_item or not food_item.is_available:
+            logger.error(f"Order Failure: Item {item_data.food_item_id} is unavailable or not in shop {data.shop_id}")
             raise HTTPException(status_code=400, detail=f"Item {item_data.food_item_id} not available")
         
         line_total = food_item.price * item_data.quantity
@@ -92,6 +115,7 @@ async def create_order(
 
     if data.payment_method == PaymentMethod.STRIPE:
         try:
+            # Modern Direct Charge with Application Fee
             checkout_params = {
                 'payment_method_types': ['card'],
                 'line_items': line_items,
@@ -100,19 +124,26 @@ async def create_order(
                 'cancel_url': f"{settings.FRONTEND_URL}/buyer/dashboard?canceled=true",
             }
             
+            request_options = {}
+            # If shop has Connect set up, use Direct Charge on their account
             if shop.stripe_account_id and shop.stripe_onboarded:
                 checkout_params['payment_intent_data'] = {
                     'application_fee_amount': int(platform_fee * 100),
-                    'transfer_data': {'destination': shop.stripe_account_id},
                 }
+                request_options = {"stripe_account": shop.stripe_account_id}
+                logger.info(f"Creating Direct Charge for shop {shop.stripe_account_id}")
 
-            checkout_session = stripe.checkout.Session.create(**checkout_params)
+            # Use the StripeClient instance with the account header
+            checkout_session = stripeClient.checkout.sessions.create(
+                params=checkout_params,
+                options=request_options
+            )
             checkout_url = checkout_session.url
             stripe_session_id = checkout_session.id
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Stripe session failed: {str(e)}")
+            logger.error(f"STRIPE ORDER ERROR: {e}")
+            raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
     else:
-        # CoD logic: Order is confirmed immediately
         order_status = OrderStatus.CONFIRMED
 
     order = Order(
@@ -133,7 +164,7 @@ async def create_order(
         session.add(oi)
 
     await session.commit()
-    # Eager load for response
+    
     statement = (
         select(Order)
         .where(Order.id == order.id)
@@ -141,8 +172,7 @@ async def create_order(
     )
     result = await session.exec(statement)
     order_data = result.first()
-
-    # Return validated schema to ensure items are included
+    
     response_obj = OrderResponse.model_validate(order_data)
     response_obj.checkout_url = checkout_url
     

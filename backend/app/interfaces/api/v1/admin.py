@@ -1,9 +1,10 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import select, func
+from sqlmodel import select, func, or_
+from sqlalchemy.orm import selectinload
 from app.infrastructure.db import get_session
-from app.domain.models import Shop, ShopStatus, UserRole, User, Order
-from app.interfaces.api.schemas import ShopResponseSchema, VerificationSchema, UserResponseSchema
+from app.domain.models import Shop, ShopStatus, UserRole, User, Order, OrderItem, OrderStatus
+from app.interfaces.api.schemas import ShopResponseSchema, VerificationSchema, UserResponseSchema, OrderResponse
 from app.interfaces.api.deps import RoleChecker, get_current_user
 from sqlmodel.ext.asyncio.session import AsyncSession
 from uuid import UUID
@@ -18,6 +19,7 @@ class AdminStats(BaseModel):
     total_users: int
     total_orders: int
     total_revenue: float
+    total_received_amount: float
     total_platform_fees: float
 
 @router.get("/stats", response_model=AdminStats)
@@ -25,12 +27,19 @@ async def get_global_stats(
     session: AsyncSession = Depends(get_session),
     _ = Depends(admin_check)
 ):
-    # This is a heavy query, in a real app we'd use a view or cache
     shops_count = await session.exec(select(func.count(Shop.id)))
     users_count = await session.exec(select(func.count(User.id)))
     orders_count = await session.exec(select(func.count(Order.id)))
     
+    # All orders volume
     revenue_res = await session.exec(select(func.sum(Order.total_amount)))
+    
+    # Only PAID or DELIVERED orders
+    received_res = await session.exec(
+        select(func.sum(Order.total_amount))
+        .where(or_(Order.status == OrderStatus.PAID, Order.status == OrderStatus.DELIVERED))
+    )
+    
     fees_res = await session.exec(select(func.sum(Order.platform_fee)))
     
     return {
@@ -38,8 +47,37 @@ async def get_global_stats(
         "total_users": users_count.one(),
         "total_orders": orders_count.one(),
         "total_revenue": float(revenue_res.one() or 0),
+        "total_received_amount": float(received_res.one() or 0),
         "total_platform_fees": float(fees_res.one() or 0)
     }
+
+@router.get("/orders", response_model=List[OrderResponse])
+async def list_platform_orders(
+    session: AsyncSession = Depends(get_session),
+    _ = Depends(admin_check)
+):
+    # Admin view: See all orders with shop and buyer details
+    statement = (
+        select(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.food_item),
+            selectinload(Order.buyer),
+            selectinload(Order.shop)
+        )
+        .order_by(Order.created_at.desc())
+    )
+    result = await session.exec(statement)
+    orders = result.all()
+    
+    # Manually populate buyer_name and shop_name for monitoring
+    response = []
+    for order in orders:
+        ord_resp = OrderResponse.model_validate(order)
+        ord_resp.buyer_name = order.buyer.full_name if order.buyer else "Unknown"
+        ord_resp.shop_name = order.shop.name if order.shop else "Unknown"
+        response.append(ord_resp)
+        
+    return response
 
 @router.get("/shops", response_model=List[ShopResponseSchema])
 async def list_all_shops(

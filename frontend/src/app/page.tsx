@@ -1,395 +1,280 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Button, Typography, Row, Col, Card, Space, Divider, Badge, Spin, Alert, Tag, Avatar } from 'antd';
+import { Layout, Button, Row, Col, Typography, Card, Space, Input, Badge, Tag, Avatar, message } from 'antd';
 import { 
   ShoppingOutlined, 
-  ShopOutlined, 
+  ThunderboltOutlined, 
   SafetyCertificateOutlined, 
-  ThunderboltOutlined,
-  GlobalOutlined,
-  HeartFilled,
+  EnvironmentOutlined,
+  SearchOutlined,
   ArrowRightOutlined,
-  FacebookOutlined,
-  TwitterOutlined,
-  InstagramOutlined,
-  YoutubeOutlined,
-  MenuOutlined,
-  ShoppingCartOutlined,
   StarFilled,
-  PlusOutlined
+  LoginOutlined,
+  UserOutlined,
+  DashboardOutlined,
+  LogoutOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useCart } from '@/lib/CartContext';
 
 const { Header, Content, Footer } = Layout;
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
-export default function LandingPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+export default function Home() {
+  const [shops, setShops] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { cart: cartItems, addToCart, setIsOpen } = useCart();
+  const [role, setRole] = useState<string | null>(null);
+  const { cart, setIsOpen, clearCart } = useCart();
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchLandingData = async () => {
-      setLoading(true);
-      setError(null);
+    const storedRole = localStorage.getItem('role');
+    setRole(storedRole);
+
+    const fetchData = async () => {
       try {
-        const [itemsRes, catsRes] = await Promise.all([
-          api.get('/public/items'),
+        const [shopsRes, catsRes] = await Promise.all([
+          api.get('/public/shops'),
           api.get('/public/categories')
         ]);
-        setItems(itemsRes.data.slice(0, 12));
-        setCategories(catsRes.data);
-      } catch (err: any) {
-        console.error('Landing page data fetch failed:', err);
-        setError('Unable to load featured dishes. Please check your connection.');
+        setShops(shopsRes.data.slice(0, 4));
+        setCategories(catsRes.data.slice(0, 6));
+      } catch (error) {
+        console.error('Failed to fetch landing data');
       } finally {
         setLoading(false);
       }
     };
-    fetchLandingData();
+    fetchData();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId');
+    clearCart();
+    setRole(null);
+    message.success('Logged out successfully');
+  };
+
+  const getDashboardLink = () => {
+    if (!role) return '/login';
+    if (role.includes('ADMIN')) return '/admin/dashboard';
+    if (role.includes('SHOP')) return '/shop/dashboard';
+    return '/buyer/dashboard';
+  };
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#fff' }}>
-      {/* Navbar */}
+      {/* Navigation */}
       <Header style={{ 
-        position: 'sticky', 
-        top: 0, 
+        position: 'fixed', 
         zIndex: 1000, 
         width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #f0f0f0',
-        padding: '0 20px',
-        height: '70px'
+        padding: '0 clamp(16px, 5vw, 120px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '72px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-          <Title level={3} style={{ margin: 0, color: '#ff4d4f', fontWeight: 800, fontSize: 'clamp(18px, 5vw, 24px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Title level={3} style={{ margin: 0, color: '#ff4d4f', fontWeight: 800, cursor: 'pointer' }} onClick={() => router.push('/')}>
             Fast-Feast
           </Title>
         </div>
-        <Space size="middle">
-          <Badge count={cartItems.length} showZero offset={[0, 0]}>
-            <Button 
-              type="text" 
-              icon={<ShoppingCartOutlined style={{ fontSize: 20 }} />} 
-              onClick={() => setIsOpen(true)}
-            />
+
+        <Space size="large">
+          <Badge count={cart.length} showZero offset={[0, 0]}>
+             <Button type="text" icon={<ShoppingCartOutlined style={{ fontSize: 20 }} />} onClick={() => setIsOpen(true)} />
           </Badge>
-          <Link href="/buyer/dashboard" className="hide-mobile"><Button type="text">Browse</Button></Link>
-          <Link href="/login"><Button type="text">Login</Button></Link>
-          <Link href="/register/buyer"><Button type="primary" shape="round">Sign Up</Button></Link>
+          
+          {role ? (
+            <Space size="middle">
+              <Link href={getDashboardLink()}>
+                <Button type="primary" shape="round" icon={<DashboardOutlined />}>Dashboard</Button>
+              </Link>
+              <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>Logout</Button>
+            </Space>
+          ) : (
+            <Space>
+              <Link href="/login">
+                <Button type="text" style={{ fontWeight: 600 }}>Login</Button>
+              </Link>
+              <Link href="/register/buyer">
+                <Button type="primary" shape="round" style={{ fontWeight: 600, background: '#ff4d4f' }}>
+                  Sign up
+                </Button>
+              </Link>
+            </Space>
+          )}
         </Space>
       </Header>
 
-      <Content>
-        {/* Professional Hero Section */}
+      <Content style={{ marginTop: 72 }}>
+        {/* Hero Section */}
         <div style={{ 
+          background: 'linear-gradient(135deg, #fffcfc 0%, #fff0f0 100%)',
+          padding: 'clamp(40px, 10vw, 80px) clamp(16px, 5vw, 120px)',
           position: 'relative',
-          padding: 'clamp(40px, 8vh, 80px) 20px',
-          background: '#fff',
           overflow: 'hidden'
         }}>
-          {/* Decorative background element */}
-          <div style={{
-            position: 'absolute',
-            top: '-5%',
-            right: '-5%',
-            width: '45%',
-            height: '110%',
-            background: '#fff5f5',
-            borderRadius: '100% 0 0 100%',
-            zIndex: 0
-          }} className="hide-mobile" />
-
-          <Row gutter={[48, 48]} align="middle" style={{ position: 'relative', zIndex: 1, maxWidth: 1400, margin: '0 auto' }}>
+          <Row align="middle" gutter={[40, 40]}>
             <Col xs={24} lg={12}>
-              <Space direction="vertical" size="middle">
-                <Badge 
-                  status="processing" 
-                  color="#ff4d4f" 
-                  text={<Text strong style={{ color: '#ff4d4f', letterSpacing: 0.5, fontSize: 12 }}>NEW FLAVORS ADDED WEEKLY</Text>} 
-                  style={{ background: '#fff1f0', padding: '4px 12px', borderRadius: '20px' }}
+              <Tag color="error" style={{ marginBottom: 16, borderRadius: 20, padding: '4px 12px' }}>
+                <ThunderboltOutlined /> Fastest Delivery in Town
+              </Tag>
+              <Title style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 850, lineHeight: 1.1, marginBottom: 24 }}>
+                Savor the <span style={{ color: '#ff4d4f' }}>Flavors</span> <br /> Delivered to Your Door
+              </Title>
+              <Paragraph style={{ fontSize: 18, color: '#666', marginBottom: 40, maxWidth: 500 }}>
+                Order from your favorite local restaurants and get fresh, hot meals delivered with lightning speed.
+              </Paragraph>
+              
+              <div style={{ 
+                background: '#fff', 
+                padding: 8, 
+                borderRadius: 50, 
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                display: 'flex',
+                maxWidth: 500
+              }}>
+                <Input 
+                  prefix={<EnvironmentOutlined style={{ color: '#ff4d4f' }} />} 
+                  placeholder="Enter delivery address..." 
+                  bordered={false}
+                  style={{ flex: 1, padding: '8px 16px' }}
                 />
-                
-                <Title style={{ fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 900, lineHeight: 1.1, margin: 0 }}>
-                  Premium Food<br />
-                  <span style={{ color: '#ff4d4f' }}>At Your Door.</span>
-                </Title>
-                
-                <Paragraph style={{ fontSize: 'clamp(16px, 1.5vw, 18px)', color: '#434343', maxWidth: '550px', lineHeight: 1.6, margin: 0 }}>
-                  Experience culinary excellence from top-rated local restaurants. Fresh, hot, and exactly how you like it.
-                </Paragraph>
-                
-                <Space size="large" wrap style={{ marginTop: 16 }}>
-                  <Link href="/buyer/dashboard">
-                    <Button type="primary" size="large" icon={<ShoppingOutlined />} style={{ height: 60, padding: '0 40px', fontSize: 18, borderRadius: 12, boxShadow: '0 8px 15px rgba(255, 77, 79, 0.2)' }}>
-                      Order Now
-                    </Button>
-                  </Link>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ display: 'flex' }}>
-                       {[1,2,3,4,5].map(i => <StarFilled key={i} style={{ color: '#fadb14', fontSize: 20 }} />)}
-                    </div>
-                    <Text strong style={{ fontSize: 16 }}>4.9/5 (10k+ Reviews)</Text>
-                  </div>
-                </Space>
-
-                <div style={{ marginTop: 40, display: 'flex', gap: 40 }} className="hide-mobile">
-                  <div>
-                    <Title level={3} style={{ margin: 0 }}>500+</Title>
-                    <Text type="secondary">Partner Restaurants</Text>
-                  </div>
-                  <div>
-                    <Title level={3} style={{ margin: 0 }}>20k+</Title>
-                    <Text type="secondary">Daily Deliveries</Text>
-                  </div>
-                </div>
-              </Space>
-            </Col>
-            
-            <Col xs={24} lg={12}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '10%',
-                  left: '-5%',
-                  width: '100%',
-                  height: '100%',
-                  background: 'rgba(255, 77, 79, 0.05)',
-                  borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
-                  zIndex: -1
-                }} />
-                <img 
-                  src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" 
-                  alt="Delicious Healthy Food" 
-                  style={{ 
-                    width: '100%', 
-                    borderRadius: '24px', 
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                    transform: 'rotate(-2deg)'
-                  }}
-                />
-                {/* Floating Card UI */}
-                <Card style={{ 
-                  position: 'absolute', 
-                  bottom: '10%', 
-                  left: '-10%', 
-                  borderRadius: 16, 
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                  width: 220
-                }} className="hide-mobile">
-                  <Space align="start">
-                    <Avatar src="https://images.unsplash.com/photo-1550547660-d9450f859349" size="large" />
-                    <div>
-                      <Text strong>Double Cheese Burger</Text><br />
-                      <Text type="secondary" style={{ fontSize: 12 }}>Delivered in 20 mins</Text>
-                    </div>
-                  </Space>
-                </Card>
+                <Button 
+                  type="primary" 
+                  size="large" 
+                  shape="round" 
+                  style={{ height: 48, padding: '0 32px', fontWeight: 600, background: '#ff4d4f' }}
+                  onClick={() => router.push('/buyer/dashboard')}
+                >
+                  Explore
+                </Button>
               </div>
             </Col>
+            
+            <Col xs={24} lg={12} style={{ position: 'relative', textAlign: 'center' }}>
+               {/* Premium Visual elements */}
+               <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 400 }}>
+                 <Card style={{ 
+                   position: 'absolute', top: '10%', right: '10%', width: 200, zIndex: 2, borderRadius: 16, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', border: 'none'
+                 }} bodyStyle={{ padding: 12 }}>
+                   <Space align="start">
+                     <Avatar style={{ background: '#52c41a' }} icon={<StarFilled />} />
+                     <div>
+                        <Text strong>Top Rated</Text><br/>
+                        <Text type="secondary">4.9 (2k+ reviews)</Text>
+                     </div>
+                   </Space>
+                 </Card>
+
+                 <Card style={{ 
+                   position: 'absolute', bottom: '15%', left: '5%', width: 180, zIndex: 2, borderRadius: 16, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', border: 'none'
+                 }} bodyStyle={{ padding: 12 }}>
+                   <Space align="start">
+                     <Badge status="processing" color="red" />
+                     <div>
+                        <Text strong>Live Tracking</Text><br/>
+                        <Text type="secondary">On the way...</Text>
+                     </div>
+                   </Space>
+                 </Card>
+
+                 <img 
+                   src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" 
+                   alt="Delicious food"
+                   style={{ width: '100%', borderRadius: 30, boxShadow: '0 30px 60px rgba(0,0,0,0.15)', transform: 'rotate(-2deg)' }}
+                 />
+               </div>
+            </Col>
           </Row>
         </div>
 
-        {/* Categories Section */}
-        <div style={{ padding: '40px 50px', background: '#fff', textAlign: 'center', borderTop: '1px solid #f5f5f5' }}>
-          <Space size={[16, 16]} wrap style={{ justifyContent: 'center' }}>
-            {categories.map((cat) => (
-              <Tag key={cat} color="red" style={{ padding: '8px 24px', fontSize: 16, borderRadius: 20, cursor: 'pointer' }}>
-                {cat}
-              </Tag>
+        {/* Categories */}
+        <div style={{ padding: '80px clamp(16px, 5vw, 120px)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <Title level={2}>Popular Categories</Title>
+            <Text type="secondary">Explore various cuisines and dishes</Text>
+          </div>
+          <Row gutter={[24, 24]}>
+            {categories.map((cat, idx) => (
+              <Col xs={12} md={8} lg={4} key={idx}>
+                <Card 
+                  hoverable 
+                  style={{ textAlign: 'center', borderRadius: 20, border: '1px solid #f0f0f0' }}
+                  bodyStyle={{ padding: 24 }}
+                  onClick={() => router.push(`/buyer/dashboard?category=${cat.id}`)}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🍔</div>
+                  <Text strong>{cat.name}</Text>
+                </Card>
+              </Col>
             ))}
-          </Space>
-        </div>
-
-        {/* Featured Dishes Section */}
-        <div style={{ padding: '80px 50px', background: '#fff', maxWidth: 1400, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <Title level={2} style={{ fontWeight: 800, fontSize: 36 }}>Our Popular Dishes</Title>
-            <Paragraph style={{ fontSize: 18, color: '#666' }}>The most loved flavors from our top local kitchens</Paragraph>
-          </div>
-          
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}><Spin size="large" /></div>
-          ) : error ? (
-            <div style={{ maxWidth: 600, margin: '0 auto' }}>
-              <Alert message={error} type="error" showIcon action={<Button size="small" onClick={() => window.location.reload()}>Retry</Button>} />
-            </div>
-          ) : (
-            <Row gutter={[32, 32]} justify="start" align="stretch">
-              {items.map((item) => (
-                <Col xs={24} sm={12} lg={8} key={item.id}>
-                  <Card 
-                    hoverable 
-                    cover={
-                      <div style={{ 
-                        height: 240, 
-                        backgroundImage: item.image_url ? `url(${item.image_url})` : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundColor: '#fafafa'
-                      }} />
-                    }
-                    style={{ borderRadius: 20, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', border: '1px solid #f0f0f0' }}
-                    bodyStyle={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <Title level={4} style={{ margin: 0, fontSize: 19 }} ellipsis={{ rows: 1 }}>{item.name}</Title>
-                      <Text strong style={{ fontSize: 19, color: '#ff4d4f' }}>${item.price}</Text>
-                    </div>
-                    <Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ fontSize: 15, marginBottom: 24, flex: 1 }}>
-                      {item.description}
-                    </Paragraph>
-                    <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
-                      <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />} 
-                        onClick={() => addToCart(item)}
-                        shape="round"
-                        style={{ flex: 1 }}
-                      >
-                        Add
-                      </Button>
-                      <Link href={`/buyer/item?id=${item.id}`} style={{ flex: 1 }}>
-                        <Button block shape="round">Details</Button>
-                      </Link>
-                    </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          )}
-          
-          <div style={{ textAlign: 'center', marginTop: 64 }}>
-            <Link href="/buyer/dashboard">
-              <Button size="large" shape="round" style={{ padding: '0 60px', height: 55, fontSize: 18, fontWeight: 600 }}>Explore More</Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <div style={{ padding: '100px 50px', background: '#fafafa' }}>
-          <Row gutter={[48, 48]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <Col xs={24} md={8}>
-              <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <div style={{ background: '#fff', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-                  <ThunderboltOutlined style={{ fontSize: '32px', color: '#ff4d4f' }} />
-                </div>
-                <Title level={4}>Fastest Delivery</Title>
-                <Paragraph style={{ color: '#666' }}>Optimized routes and dedicated riders ensure your food arrives in record time.</Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <div style={{ background: '#fff', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-                  <SafetyCertificateOutlined style={{ fontSize: '32px', color: '#ff4d4f' }} />
-                </div>
-                <Title level={4}>Quality Guaranteed</Title>
-                <Paragraph style={{ color: '#666' }}>We hand-pick and rigorously verify every single partner on our platform.</Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                <div style={{ background: '#fff', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-                  <GlobalOutlined style={{ fontSize: '32px', color: '#ff4d4f' }} />
-                </div>
-                <Title level={4}>Support Local</Title>
-                <Paragraph style={{ color: '#666' }}>Empowering local small businesses with high-end tech and logistical support.</Paragraph>
-              </Card>
-            </Col>
           </Row>
+        </div>
+
+        {/* Featured Shops */}
+        <div style={{ padding: '40px clamp(16px, 5vw, 120px) 100px', background: '#fafafa' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+              <div>
+                <Title level={2} style={{ margin: 0 }}>Featured Restaurants</Title>
+                <Text type="secondary">Handpicked places with top quality food</Text>
+              </div>
+              <Link href="/buyer/dashboard">
+                <Button type="link" style={{ color: '#ff4d4f', fontWeight: 600 }}>View All <ArrowRightOutlined /></Button>
+              </Link>
+           </div>
+           <Row gutter={[24, 24]}>
+             {shops.map((shop, idx) => (
+               <Col xs={24} sm={12} lg={6} key={idx}>
+                 <Card 
+                  hoverable 
+                  cover={<img alt={shop.name} src={shop.logo_url || `https://picsum.photos/seed/${shop.id}/400/250`} style={{ height: 200, objectFit: 'cover' }} />}
+                  style={{ borderRadius: 16, overflow: 'hidden', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
+                  onClick={() => router.push(`/buyer/shop?id=${shop.id}`)}
+                 >
+                   <Card.Meta 
+                    title={shop.name} 
+                    description={
+                      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                        <Text type="secondary"><EnvironmentOutlined /> {shop.address.slice(0, 30)}...</Text>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                          <Tag color="green">4.8 <StarFilled style={{ fontSize: 10 }} /></Tag>
+                          <Text strong style={{ color: '#ff4d4f' }}>20-30 min</Text>
+                        </div>
+                      </Space>
+                    }
+                   />
+                 </Card>
+               </Col>
+             ))}
+           </Row>
         </div>
       </Content>
 
-      <Footer style={{ background: '#141414', padding: '80px 50px 40px', color: 'rgba(255,255,255,0.65)' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <Row gutter={[48, 48]}>
-            <Col xs={24} md={8}>
-              <Title level={3} style={{ color: '#ff4d4f', marginBottom: 24, fontWeight: 800 }}>Fast-Feast</Title>
-              <Paragraph style={{ color: 'rgba(255,255,255,0.45)', maxWidth: 350, fontSize: 16 }}>
-                The premium multi-vendor food marketplace. We bring the best local culinary talent directly to your doorstep.
-              </Paragraph>
-              <Space size="large" style={{ fontSize: 24, marginTop: 24 }}>
-                <FacebookOutlined className="footer-icon" style={{ cursor: 'pointer' }} />
-                <TwitterOutlined className="footer-icon" style={{ cursor: 'pointer' }} />
-                <InstagramOutlined className="footer-icon" style={{ cursor: 'pointer' }} />
-                <YoutubeOutlined className="footer-icon" style={{ cursor: 'pointer' }} />
-              </Space>
-            </Col>
-            
-            <Col xs={12} sm={8} md={4}>
-              <Title level={5} style={{ color: '#fff', marginBottom: 24 }}>Company</Title>
-              <Space direction="vertical" size="middle">
-                <Link href="#"><Text style={{ color: 'inherit' }}>Our Story</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Meet the Team</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Careers</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Contact Us</Text></Link>
-              </Space>
-            </Col>
-
-            <Col xs={12} sm={8} md={4}>
-              <Title level={5} style={{ color: '#fff', marginBottom: 24 }}>For Partners</Title>
-              <Space direction="vertical" size="middle">
-                <Link href="/register/shop"><Text style={{ color: 'inherit' }}>Become a Partner</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Vendor Portal</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Guidelines</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Resources</Text></Link>
-              </Space>
-            </Col>
-
-            <Col xs={12} sm={8} md={4}>
-              <Title level={5} style={{ color: '#fff', marginBottom: 24 }}>Support</Title>
-              <Space direction="vertical" size="middle">
-                <Link href="#"><Text style={{ color: 'inherit' }}>Help Center</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Privacy Policy</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>Terms of Service</Text></Link>
-                <Link href="#"><Text style={{ color: 'inherit' }}>FAQs</Text></Link>
-              </Space>
-            </Col>
-
-            <Col xs={12} sm={24} md={4}>
-              <Title level={5} style={{ color: '#fff', marginBottom: 24 }}>Download App</Title>
-              <div style={{ marginBottom: 16 }}>
-                 <Badge status="processing" text={<span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15 }}>iOS App - Coming Soon</span>} />
-              </div>
-              <div>
-                 <Badge status="processing" text={<span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15 }}>Android - Coming Soon</span>} />
-              </div>
-            </Col>
-          </Row>
-          
-          <Divider style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '60px 0 40px' }} />
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
-            <Text style={{ color: 'rgba(255,255,255,0.3)' }}>
-              © 2026 Fast-Feast Inc. All rights reserved.
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.3)' }}>
-              Designed with <HeartFilled style={{ color: '#ff4d4f' }} /> for Food Lovers.
-            </Text>
-          </div>
+      <Footer style={{ textAlign: 'center', background: '#141414', color: '#fff', padding: '60px 0' }}>
+        <Title level={3} style={{ color: '#fff', marginBottom: 24 }}>Fast-Feast</Title>
+        <Space size="large" style={{ marginBottom: 32 }}>
+          <Text style={{ color: '#999' }}>About Us</Text>
+          <Text style={{ color: '#999' }}>Partner with Us</Text>
+          <Text style={{ color: '#999' }}>Terms of Service</Text>
+          <Text style={{ color: '#999' }}>Contact</Text>
+        </Space>
+        <div style={{ color: '#666' }}>
+          Fast-Feast Marketplace ©{new Date().getFullYear()} Created with ❤️ for Foodies
         </div>
       </Footer>
-      
-      <style jsx global>{`
-        @media (max-width: 991px) {
-          .hide-mobile {
-            display: none !important;
-          }
-        }
-        .footer-icon:hover {
-          color: #ff4d4f !important;
-          transition: color 0.3s;
-        }
-      `}</style>
     </Layout>
   );
 }

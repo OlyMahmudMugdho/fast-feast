@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List
+from typing import Optional, List, Any
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
@@ -128,6 +128,8 @@ class OrderResponse(BaseModel):
     id: UUID
     buyer_id: UUID
     shop_id: UUID
+    buyer_name: Optional[str] = None
+    shop_name: Optional[str] = None
     total_amount: Decimal
     platform_fee: Decimal
     status: OrderStatus
@@ -145,3 +147,9 @@ class OrderStatusUpdate(BaseModel):
 
 class StripeOnboardResponse(BaseModel):
     account_link_url: str
+
+class StripeAccountStatusResponse(BaseModel):
+    onboarding_complete: bool
+    ready_to_pay: bool
+    details: Optional[Any] = None
+    error: Optional[str] = None

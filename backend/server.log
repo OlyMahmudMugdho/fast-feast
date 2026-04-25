@@ -1,0 +1,304 @@
+INFO:     Started server process [28467]
+INFO:     Waiting for application startup.
+2026-04-25 11:00:46,155 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-04-25 11:00:46,155 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-25 11:00:46,159 INFO sqlalchemy.engine.Engine select current_schema()
+2026-04-25 11:00:46,159 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-25 11:00:46,161 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-04-25 11:00:46,162 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-25 11:00:46,164 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:00:46,164 INFO sqlalchemy.engine.Engine COMMIT
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55866 - "GET /shop/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55866 - "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55866 - "GET /_next/static/chunks/0c6wbltli~v95.js HTTP/1.1" 304 Not Modified
+2026-04-25 11:01:11,330 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:01:11,458 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".id = $1::UUID
+2026-04-25 11:01:11,461 INFO sqlalchemy.engine.Engine [generated in 0.00045s] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:11,673 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:01:11,674 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".id = $1::UUID
+2026-04-25 11:01:11,674 INFO sqlalchemy.engine.Engine [cached since 0.216s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:11,678 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:01:11,678 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".id = $1::UUID
+2026-04-25 11:01:11,678 INFO sqlalchemy.engine.Engine [cached since 0.2202s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:11,684 INFO sqlalchemy.engine.Engine SELECT shop.name, shop.address, shop.status, shop.logo_url, shop.stripe_account_id, shop.stripe_onboarded, shop.id, shop.owner_id, shop.created_at 
+FROM shop 
+WHERE shop.owner_id = $1::UUID
+2026-04-25 11:01:11,684 INFO sqlalchemy.engine.Engine [generated in 0.00036s] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:11,715 INFO sqlalchemy.engine.Engine SELECT "order".id, "order".buyer_id, "order".shop_id, "order".total_amount, "order".platform_fee, "order".status, "order".payment_method, "order".delivery_address, "order".stripe_session_id, "order".created_at 
+FROM "order" 
+WHERE "order".shop_id = $1::UUID ORDER BY "order".created_at DESC
+2026-04-25 11:01:11,716 INFO sqlalchemy.engine.Engine [generated in 0.00025s] (UUID('11111111-1111-1111-1111-111111111111'),)
+2026-04-25 11:01:11,753 INFO sqlalchemy.engine.Engine SELECT orderitem.order_id AS orderitem_order_id, orderitem.id AS orderitem_id, orderitem.food_item_id AS orderitem_food_item_id, orderitem.quantity AS orderitem_quantity, orderitem.price_at_purchase AS orderitem_price_at_purchase 
+FROM orderitem 
+WHERE orderitem.order_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID)
+2026-04-25 11:01:11,753 INFO sqlalchemy.engine.Engine [generated in 0.00062s] (UUID('fa3a84a6-4e28-436f-8261-428e9eea16e8'), UUID('cf2b6e3e-6a1d-4439-a1c7-73e27ef68251'), UUID('5be2a0e5-7a94-41bb-bff3-44de76a16dc5'), UUID('91eade5e-b8cd-4597-b5f8-abef01bfe2c4'), UUID('03728cd5-c528-408d-bd41-344570db198a'), UUID('ae111111-1111-1111-1111-111111111111'))
+2026-04-25 11:01:11,765 INFO sqlalchemy.engine.Engine SELECT fooditem.id AS fooditem_id, fooditem.name AS fooditem_name, fooditem.description AS fooditem_description, fooditem.price AS fooditem_price, fooditem.image_url AS fooditem_image_url, fooditem.is_available AS fooditem_is_available, fooditem.shop_id AS fooditem_shop_id, fooditem.category_id AS fooditem_category_id 
+FROM fooditem 
+WHERE fooditem.id IN ($1::UUID, $2::UUID)
+2026-04-25 11:01:11,765 INFO sqlalchemy.engine.Engine [generated in 0.00038s] (UUID('f1111111-1111-1111-1111-111111111111'), UUID('f1111111-1111-1111-1111-111111111112'))
+2026-04-25 11:01:11,769 INFO sqlalchemy.engine.Engine SELECT shop.name, shop.address, shop.status, shop.logo_url, shop.stripe_account_id, shop.stripe_onboarded, shop.id, shop.owner_id, shop.created_at 
+FROM shop 
+WHERE shop.owner_id = $1::UUID
+2026-04-25 11:01:11,769 INFO sqlalchemy.engine.Engine [cached since 0.08551s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+INFO:     127.0.0.1:55866 - "GET /api/v1/orders/my-orders HTTP/1.1" 200 OK
+2026-04-25 11:01:11,776 INFO sqlalchemy.engine.Engine SELECT shop.name, shop.address, shop.status, shop.logo_url, shop.stripe_account_id, shop.stripe_onboarded, shop.id, shop.owner_id, shop.created_at 
+FROM shop 
+WHERE shop.owner_id = $1::UUID
+2026-04-25 11:01:11,777 INFO sqlalchemy.engine.Engine [cached since 0.09349s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:11,778 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:55888 - "GET /api/v1/shops/me HTTP/1.1" 200 OK
+2026-04-25 11:01:11,802 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-04-25 11:01:11,810 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".shop_id = $1::UUID
+2026-04-25 11:01:11,810 INFO sqlalchemy.engine.Engine [generated in 0.00025s] (UUID('11111111-1111-1111-1111-111111111111'),)
+INFO:     127.0.0.1:55880 - "GET /api/v1/shops/me/employees HTTP/1.1" 200 OK
+2026-04-25 11:01:11,813 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-04-25 11:01:12,821 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:01:12,825 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".id = $1::UUID
+2026-04-25 11:01:12,825 INFO sqlalchemy.engine.Engine [cached since 1.367s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:12,835 INFO sqlalchemy.engine.Engine SELECT shop.name, shop.address, shop.status, shop.logo_url, shop.stripe_account_id, shop.stripe_onboarded, shop.id, shop.owner_id, shop.created_at 
+FROM shop 
+WHERE shop.owner_id = $1::UUID
+2026-04-25 11:01:12,835 INFO sqlalchemy.engine.Engine [cached since 1.152s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:01:13,885 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:55880 - "POST /api/v1/orders/onboard HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 421, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/home/mugdho/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/main.py", line 30, in serve_static_html
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/app/interfaces/api/v1/orders.py", line 30, in onboard_shop
+    account = stripe.Account.create(type="express")
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_account.py", line 1515, in create
+    cls._static_request(
+    ~~~~~~~~~~~~~~~~~~~^
+        "post",
+        ^^^^^^^
+        cls.class_url(),
+        ^^^^^^^^^^^^^^^^
+        params=params,
+        ^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_resource.py", line 171, in _static_request
+    return _APIRequestor._global_instance().request(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        method_,
+        ^^^^^^^^
+    ...<3 lines>...
+        base_address=base_address,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 212, in request
+    resp = requestor._interpret_response(rbody, rcode, rheaders, api_mode)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 901, in _interpret_response
+    self.handle_error_response(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        rbody, rcode, resp.data, rheaders, api_mode
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 353, in handle_error_response
+    raise err
+stripe._error.InvalidRequestError: Request req_CvYaykxVz5cwup: You can only create new accounts if you've signed up for Connect, which you can do at https://dashboard.stripe.com/connect.
+INFO:     127.0.0.1:58122 - "POST /api/v1/orders/onboard HTTP/1.1" 401 Unauthorized
+2026-04-25 11:02:02,697 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:02:02,699 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".email = $1::VARCHAR
+2026-04-25 11:02:02,700 INFO sqlalchemy.engine.Engine [generated in 0.00036s] ('owner1@pizza.com',)
+INFO:     127.0.0.1:43360 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+2026-04-25 11:02:03,210 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-04-25 11:02:09,517 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-25 11:02:09,518 INFO sqlalchemy.engine.Engine SELECT "user".email, "user".full_name, "user".role, "user".phone, "user".is_active, "user".id, "user".hashed_password, "user".created_at, "user".shop_id 
+FROM "user" 
+WHERE "user".id = $1::UUID
+2026-04-25 11:02:09,518 INFO sqlalchemy.engine.Engine [cached since 58.06s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:02:09,522 INFO sqlalchemy.engine.Engine SELECT shop.name, shop.address, shop.status, shop.logo_url, shop.stripe_account_id, shop.stripe_onboarded, shop.id, shop.owner_id, shop.created_at 
+FROM shop 
+WHERE shop.owner_id = $1::UUID
+2026-04-25 11:02:09,522 INFO sqlalchemy.engine.Engine [cached since 57.84s ago] (UUID('00000000-0000-0000-0000-000000000002'),)
+2026-04-25 11:02:09,900 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:33566 - "POST /api/v1/orders/onboard HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 421, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/home/mugdho/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/main.py", line 30, in serve_static_html
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/app/interfaces/api/v1/orders.py", line 30, in onboard_shop
+    account = stripe.Account.create(type="express")
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_account.py", line 1515, in create
+    cls._static_request(
+    ~~~~~~~~~~~~~~~~~~~^
+        "post",
+        ^^^^^^^
+        cls.class_url(),
+        ^^^^^^^^^^^^^^^^
+        params=params,
+        ^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_resource.py", line 171, in _static_request
+    return _APIRequestor._global_instance().request(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        method_,
+        ^^^^^^^^
+    ...<3 lines>...
+        base_address=base_address,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 212, in request
+    resp = requestor._interpret_response(rbody, rcode, rheaders, api_mode)
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 901, in _interpret_response
+    self.handle_error_response(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        rbody, rcode, resp.data, rheaders, api_mode
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mugdho/codes/python-codes/fast-feast/backend/.venv/lib/python3.13/site-packages/stripe/_api_requestor.py", line 353, in handle_error_response
+    raise err
+stripe._error.InvalidRequestError: Request req_LuVAyRUzPUIcMj: You can only create new accounts if you've signed up for Connect, which you can do at https://dashboard.stripe.com/connect.
