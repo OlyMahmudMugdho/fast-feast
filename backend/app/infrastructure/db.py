@@ -4,7 +4,27 @@ from sqlmodel import SQLModel, create_engine
 from app.core.config import settings
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-engine = create_async_engine(settings.DATABASE_URL, echo=True, future=True)
+# Configure engine with SSL if needed (required for Neon)
+db_url = settings.DATABASE_URL
+connect_args = {}
+
+if "sslmode=" in db_url or "ssl=" in db_url:
+    connect_args["ssl"] = True
+    
+    # Properly parse and strip problematic query parameters
+    from urllib.parse import urlparse, urlunparse
+    
+    parsed = urlparse(db_url)
+    # Reconstruct the URL without ANY query parameters to be safe with asyncpg
+    # as it often chokes on extra params like channel_binding or sslmode
+    db_url = urlunparse(parsed._replace(query=""))
+
+engine = create_async_engine(
+    db_url, 
+    echo=True, 
+    future=True,
+    connect_args=connect_args
+)
 
 async def init_db():
     async with engine.begin() as conn:

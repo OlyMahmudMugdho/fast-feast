@@ -62,12 +62,23 @@ async def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    db_url = settings.DATABASE_URL
+    connect_args = {}
+
+    if "sslmode=" in db_url or "ssl=" in db_url:
+        connect_args["ssl"] = True
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(db_url)
+        db_url = urlunparse(parsed._replace(query=""))
+
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = db_url
+    
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
