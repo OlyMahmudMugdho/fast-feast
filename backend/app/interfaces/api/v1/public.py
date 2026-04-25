@@ -1,7 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
-from sqlalchemy.orm import selectinload
 from app.infrastructure.db import get_session
 from app.domain.models import Shop, Category, FoodItem, ShopStatus
 from app.interfaces.api.schemas import ShopPublicResponse, CategoryResponse, FoodItemResponse
@@ -11,56 +10,28 @@ from uuid import UUID
 router = APIRouter(prefix="/public", tags=["public"])
 
 @router.get("/shops", response_model=List[ShopPublicResponse])
-async def list_shops(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_public_shops(session: AsyncSession = Depends(get_session)):
     result = await session.exec(select(Shop).where(Shop.status == ShopStatus.APPROVED))
     return result.all()
 
+@router.get("/categories", response_model=List[CategoryResponse])
+async def get_public_categories(session: AsyncSession = Depends(get_session)):
+    result = await session.exec(select(Category))
+    return result.all()
+
+@router.get("/shops/{shop_id}/items", response_model=List[FoodItemResponse])
+async def get_shop_items(shop_id: UUID, session: AsyncSession = Depends(get_session)):
+    result = await session.exec(select(FoodItem).where(FoodItem.shop_id == shop_id, FoodItem.is_available == True))
+    return result.all()
+
 @router.get("/items", response_model=List[FoodItemResponse])
-async def list_all_items(
-    session: AsyncSession = Depends(get_session)
-):
-    # Join with Shop to ensure we only get items from approved shops
+async def get_all_items(session: AsyncSession = Depends(get_session)):
+    """Fetch all available items from all approved shops for discovery."""
     statement = (
         select(FoodItem)
         .join(Shop)
         .where(Shop.status == ShopStatus.APPROVED, FoodItem.is_available == True)
+        .limit(20)
     )
-    result = await session.exec(statement)
-    return result.all()
-
-@router.get("/categories", response_model=List[str])
-async def list_all_categories(
-    session: AsyncSession = Depends(get_session)
-):
-    # Get unique category names from approved shops
-    statement = (
-        select(Category.name)
-        .join(Shop)
-        .where(Shop.status == ShopStatus.APPROVED)
-        .distinct()
-    )
-    result = await session.exec(statement)
-    return result.all()
-
-@router.get("/shops/{shop_id}/categories", response_model=List[CategoryResponse])
-async def get_shop_categories(
-    shop_id: UUID,
-    session: AsyncSession = Depends(get_session)
-):
-    result = await session.exec(select(Category).where(Category.shop_id == shop_id))
-    return result.all()
-
-@router.get("/shops/{shop_id}/items", response_model=List[FoodItemResponse])
-async def get_shop_items(
-    shop_id: UUID,
-    category_id: UUID = None,
-    session: AsyncSession = Depends(get_session)
-):
-    statement = select(FoodItem).where(FoodItem.shop_id == shop_id, FoodItem.is_available == True)
-    if category_id:
-        statement = statement.where(FoodItem.category_id == category_id)
-    
     result = await session.exec(statement)
     return result.all()

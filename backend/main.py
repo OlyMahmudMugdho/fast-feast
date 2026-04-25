@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.infrastructure.db import init_db
 import os
@@ -13,6 +14,23 @@ async def lifespan(app: FastAPI):
 from app.interfaces.api.v1.router import api_router
 
 app = FastAPI(title="Fast-Feast API", lifespan=lifespan)
+
+# CORS Configuration
+# Essential for Flutter Web and Mobile Apps connecting to local backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1",
+        "http://127.0.0.1:8000",
+        "*", # Allow all for development flexibility
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # API Routes
 app.include_router(api_router, prefix="/api/v1")
