@@ -37,48 +37,50 @@ class LandingScreen extends StatelessWidget {
                     ),
                   ),
                   const Text(
-                    'Delicious food delivered in minutes',
+                    'The future of food delivery is here',
                     style: TextStyle(fontSize: 18, color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 80),
+                  
+                  // Button 1: Browse Dishes
                   SizedBox(
                     width: double.infinity,
                     height: 56,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/login'),
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/home'),
+                      icon: const Icon(Icons.restaurant_menu),
+                      label: const Text('BROWSE DISHES', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.redAccent,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
                       ),
-                      child: const Text('Login to Start Eating', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/register-buyer'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white, width: 2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: const Text('Sign Up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
+                  
+                  // Button 2: Login / Register
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/login'),
+                      icon: const Icon(Icons.login),
+                      label: const Text('LOGIN / REGISTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register-shop'),
-                    child: const Text(
-                      'Partner with us? Register your shop',
-                      style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
                     ),
+                  ),
+                  
+                  const SizedBox(height: 48),
+                  const Text(
+                    'Discover the best food from local restaurants',
+                    style: TextStyle(color: Colors.white60, fontSize: 12),
                   ),
                 ],
               ),

@@ -12,6 +12,9 @@ import 'screens/address_screen.dart';
 import 'screens/payment_methods_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/support_screen.dart';
+import 'screens/orders_screen.dart';
+import 'screens/buyer_dashboard.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(const FastFeastApp());
@@ -62,6 +65,9 @@ class FastFeastApp extends StatelessWidget {
           '/register-shop': (ctx) => const RegisterShopScreen(),
           '/home': (ctx) => const MainNavigationShell(),
           '/cart': (ctx) => const CartScreen(),
+          '/orders': (ctx) => const OrdersScreen(),
+          '/buyer-dashboard': (ctx) => const BuyerDashboard(),
+          '/profile': (ctx) => const ProfileScreen(),
           '/addresses': (ctx) => const AddressScreen(),
           '/payments': (ctx) => const PaymentMethodsScreen(),
           '/notifications': (ctx) => const NotificationsScreen(),

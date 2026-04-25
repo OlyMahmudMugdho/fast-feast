@@ -1,17 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  void _handleLogout(BuildContext context) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    
+    // Navigate first, then clear state
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    
+    await auth.logout();
+    cart.reset();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final role = auth.role?.replaceAll('_', ' ') ?? 'User';
+    
+    if (!auth.isAuthenticated) {
+      return _buildGuestView(context);
+    }
+
+    final role = auth.role?.replaceAll('_', ' ') ?? 'Fast-Feast Member';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account Dashboard')),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -19,25 +36,25 @@ class ProfileScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withOpacity(0.08),
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
               ),
               child: Column(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.redAccent,
-                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: const Icon(Icons.person_rounded, size: 60, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     role,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                   ),
-                  const Text('Member since 2026', style: TextStyle(color: Colors.grey)),
+                  const Text('Platform Ecosystem Member', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -45,51 +62,33 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  _buildMenuTile(
-                    context, 
-                    'Order History', 
-                    Icons.history, 
-                    () => Navigator.pushNamed(context, '/orders')
-                  ),
-                  _buildMenuTile(
-                    context, 
-                    'Saved Addresses', 
-                    Icons.location_on_outlined, 
-                    () => Navigator.pushNamed(context, '/addresses')
-                  ),
-                  _buildMenuTile(
-                    context, 
-                    'Payment Methods', 
-                    Icons.credit_card, 
-                    () => Navigator.pushNamed(context, '/payments')
-                  ),
-                  const Divider(height: 48),
-                  _buildMenuTile(
-                    context, 
-                    'Notifications', 
-                    Icons.notifications_none, 
-                    () => Navigator.pushNamed(context, '/notifications')
-                  ),
-                  _buildMenuTile(
-                    context, 
-                    'Help & Support', 
-                    Icons.help_outline, 
-                    () => Navigator.pushNamed(context, '/support')
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => auth.logout(),
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Logout'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.redAccent,
-                        side: const BorderSide(color: Colors.redAccent),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                  _buildMenuTile(context, 'Order Journey', Icons.receipt_long_rounded, () => Navigator.pushNamed(context, '/orders')),
+                  _buildMenuTile(context, 'Saved Locations', Icons.map_rounded, () => Navigator.pushNamed(context, '/addresses')),
+                  _buildMenuTile(context, 'Payment Gateway', Icons.account_balance_wallet_rounded, () => Navigator.pushNamed(context, '/payments')),
+                  const Divider(height: 50, thickness: 1),
+                  _buildMenuTile(context, 'Hub Notifications', Icons.notifications_active_rounded, () => Navigator.pushNamed(context, '/notifications')),
+                  _buildMenuTile(context, 'Knowledge Base', Icons.help_center_rounded, () => Navigator.pushNamed(context, '/support')),
+                  const SizedBox(height: 40),
+                  
+                  Material(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: () => _handleLogout(context),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'LOGOUT', 
+                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, letterSpacing: 2),
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  const Text('FAST-FEAST ENTERPRISE v1.0', style: TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
                 ],
               ),
             ),
@@ -99,11 +98,75 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildGuestView(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 64), 
+              Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.1), 
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.account_circle_outlined, size: 90, color: Colors.redAccent),
+              ),
+              const SizedBox(height: 40),
+              const Text(
+                'Your Profile', 
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1.5)
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Log in to see your orders, manage addresses, and unlock personalized features.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey, height: 1.6),
+              ),
+              const SizedBox(height: 64),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  icon: const Icon(Icons.login_rounded),
+                  label: const Text('LOGIN / REGISTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/home'),
+                child: const Text('Continue Browsing as Guest', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 48), // Large bottom spacing to ensure clearance
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMenuTile(BuildContext context, String title, IconData icon, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: Colors.redAccent),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: Theme.of(context).primaryColor, size: 20),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
       onTap: onTap,
     );
   }

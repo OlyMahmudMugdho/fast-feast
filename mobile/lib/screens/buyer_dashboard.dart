@@ -6,6 +6,7 @@ import '../core/api_client.dart';
 import '../models/models.dart';
 import '../providers/cart_provider.dart';
 import 'shop_detail_screen.dart';
+import 'dish_detail_screen.dart';
 
 class BuyerDashboard extends StatefulWidget {
   const BuyerDashboard({super.key});
@@ -18,6 +19,8 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
   final ApiClient _apiClient = ApiClient();
   List<Shop> _shops = [];
   List<FoodItem> _dishes = [];
+  List<dynamic> _categories = [];
+  String? _selectedCategoryId;
   bool _isLoading = true;
 
   @override
@@ -32,18 +35,24 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
     try {
       final shopsRes = await _apiClient.get('/public/shops');
       final dishesRes = await _apiClient.get('/public/items');
+      final catsRes = await _apiClient.get('/public/categories');
       
-      if (shopsRes.statusCode == 200 && dishesRes.statusCode == 200) {
-        final List<dynamic> shopData = jsonDecode(shopsRes.body);
-        final List<dynamic> dishData = jsonDecode(dishesRes.body);
-        
-        if (mounted) {
-          setState(() {
-            _shops = shopData.map((s) => Shop.fromJson(s)).toList();
-            _dishes = dishData.map((d) => FoodItem.fromJson(d)).toList();
-            _isLoading = false;
-          });
+      if (mounted) {
+        if (shopsRes.statusCode == 200) {
+          final List<dynamic> shopData = jsonDecode(shopsRes.body);
+          _shops = shopData.map((s) => Shop.fromJson(s)).toList();
         }
+        if (dishesRes.statusCode == 200) {
+          final List<dynamic> dishData = jsonDecode(dishesRes.body);
+          _dishes = dishData.map((d) => FoodItem.fromJson(d)).toList();
+        }
+        if (catsRes.statusCode == 200) {
+          _categories = jsonDecode(catsRes.body);
+        }
+        
+        setState(() {
+          _isLoading = false;
+        });
       }
     } catch (e) {
       debugPrint('Error fetching marketplace: $e');
@@ -54,145 +63,164 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
+    final primaryColor = Theme.of(context).primaryColor;
 
-    // Guard clause: ensure lists are initialized
-    final dishesCount = _dishes.length;
-    final shopsCount = _shops.length;
+    final categories = _categories;
+    final dishes = _dishes;
+    final shops = _shops;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
-        : CustomScrollView(
-            slivers: [
-              // Search Header
-              SliverAppBar(
-                floating: true,
-                title: const Text('Fast-Feast Marketplace'),
-                backgroundColor: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(60),
+        : RefreshIndicator(
+            onRefresh: _fetchData,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Search for food or restaurants...',
-                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Search flavors, cuisines, places...',
+                        prefixIcon: Icon(Icons.search, color: primaryColor),
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
                 ),
-              ),
-              
-              // Trending Dishes Section
-              if (dishesCount > 0) SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+
+                if (categories.isNotEmpty) SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 50,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length + 1,
+                      itemBuilder: (ctx, i) {
+                        if (i == 0) {
+                          return _buildCategoryChip('All', null, primaryColor);
+                        }
+                        final cat = categories[i - 1];
+                        return _buildCategoryChip(cat['name'], cat['id'], primaryColor);
+                      },
+                    ),
+                  ),
+                ),
+                
+                if (dishes.isNotEmpty) SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Trending Dishes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                        child: Text('Curated For You', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.grey[900])),
+                      ),
                       SizedBox(
-                        height: 220,
+                        height: 200, // Reduced height since button is gone
                         child: ListView.builder(
+                          padding: const EdgeInsets.only(left: 20),
                           scrollDirection: Axis.horizontal,
-                          itemCount: dishesCount,
-                          itemBuilder: (ctx, i) {
-                            final dish = _dishes[i];
-                            return _buildDishCard(dish, cart);
-                          },
+                          itemCount: dishes.length,
+                          itemBuilder: (ctx, i) => _buildCarouselDishCard(dishes[i], primaryColor),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              // All Restaurants Section
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(shopsCount > 0 ? 'Popular Restaurants' : 'No restaurants available', 
-                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      if (shopsCount > 0) TextButton(onPressed: () {}, child: const Text('View All')),
-                    ],
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Explore Restaurants', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.grey[900])),
+                        Icon(Icons.tune, color: primaryColor),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) {
-                    final shop = _shops[i];
-                    return Padding(
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: _buildShopCard(shop),
-                    );
-                  },
-                  childCount: shopsCount,
+                      child: _buildShopCard(shops[i], primaryColor),
+                    ),
+                    childCount: shops.length,
+                  ),
                 ),
-              ),
-              const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-            ],
+                const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+              ],
+            ),
           ),
     );
   }
 
-  Widget _buildDishCard(FoodItem dish, CartProvider cart) {
+  Widget _buildCategoryChip(String label, String? id, Color color) {
+    final isSelected = _selectedCategoryId == id;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (val) => setState(() => _selectedCategoryId = id),
+        selectedColor: color.withOpacity(0.2),
+        labelStyle: TextStyle(
+          color: isSelected ? color : Colors.grey[700],
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        side: BorderSide(color: isSelected ? color : Colors.grey[300]!),
+        showCheckmark: false,
+      ),
+    );
+  }
+
+  // Updated: Cleaner card without button for "Curated For You"
+  Widget _buildCarouselDishCard(FoodItem dish, Color color) {
     return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
+      width: 170,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DishDetailScreen(dish: dish))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CachedNetworkImage(
-              imageUrl: dish.imageUrl ?? 'https://picsum.photos/seed/${dish.id}/200/120',
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.fastfood)),
+            Hero(
+              tag: 'dish-${dish.id}',
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: CachedNetworkImage(
+                  imageUrl: dish.imageUrl ?? 'https://picsum.photos/seed/${dish.id}/200/150',
+                  height: 110,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('\$${dish.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 30,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        cart.addItem(dish);
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Added ${dish.name}'), duration: const Duration(seconds: 1)),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Add', style: TextStyle(fontSize: 12)),
-                    ),
-                  )
+                  Text(dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 4),
+                  Text('\$${dish.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text('Discovery Special', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
                 ],
               ),
             ),
@@ -202,42 +230,57 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
     );
   }
 
-  Widget _buildShopCard(Shop shop) {
+  Widget _buildShopCard(Shop shop, Color color) {
     return Card(
-      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey[200]!)),
       child: InkWell(
+        borderRadius: BorderRadius.circular(20),
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ShopDetailScreen(shop: shop))),
-        child: Row(
-          children: [
-            CachedNetworkImage(
-              imageUrl: shop.logoUrl ?? 'https://picsum.photos/seed/${shop.id}/120/120',
-              height: 100,
-              width: 100,
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.store)),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: CachedNetworkImage(
+                  imageUrl: shop.logoUrl ?? 'https://picsum.photos/seed/${shop.id}/120/120',
+                  height: 90,
+                  width: 90,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(shop.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(shop.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    Text(shop.address, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    Text(shop.address, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                     const SizedBox(height: 8),
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.star, size: 16, color: Colors.amber),
-                        Text(' 4.8 ', style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text('(500+)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(8)),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.star, size: 14, color: Colors.green),
+                              Text(' 4.8', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('25-35 min', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                       ],
                     )
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

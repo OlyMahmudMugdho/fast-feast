@@ -8,9 +8,9 @@ class Shop {
 
   factory Shop.fromJson(Map<String, dynamic> json) {
     return Shop(
-      id: json['id'],
-      name: json['name'],
-      address: json['address'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? 'Unknown Shop',
+      address: json['address'] ?? 'No address',
       logoUrl: json['logo_url'],
     );
   }
@@ -23,6 +23,7 @@ class FoodItem {
   final double price;
   final String? imageUrl;
   final String shopId;
+  final String categoryId; // Added missing field
 
   FoodItem({
     required this.id,
@@ -31,16 +32,18 @@ class FoodItem {
     required this.price,
     this.imageUrl,
     required this.shopId,
+    required this.categoryId,
   });
 
   factory FoodItem.fromJson(Map<String, dynamic> json) {
     return FoodItem(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      price: double.parse(json['price'].toString()),
+      id: json['id'] ?? '',
+      name: json['name'] ?? 'Unnamed Item',
+      description: json['description'] ?? '',
+      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
       imageUrl: json['image_url'],
-      shopId: json['shop_id'],
+      shopId: json['shop_id'] ?? '',
+      categoryId: json['category_id'] ?? '',
     );
   }
 }
@@ -69,11 +72,13 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'],
-      totalAmount: double.parse(json['total_amount'].toString()),
-      status: json['status'],
-      paymentMethod: json['payment_method'],
-      createdAt: DateTime.parse(json['created_at']),
+      id: json['id'] ?? '',
+      totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+      status: json['status'] ?? 'PENDING',
+      paymentMethod: json['payment_method'] ?? 'UNKNOWN',
+      createdAt: json['created_at'] != null 
+          ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 }

@@ -9,7 +9,11 @@ class CartProvider with ChangeNotifier {
 
   Map<String, CartItem> get items => {..._items};
 
-  int get itemCount => _items.length;
+  int get itemCount {
+    int total = 0;
+    _items.forEach((key, item) => total += item.quantity);
+    return total;
+  }
 
   double get totalAmount {
     var total = 0.0;
@@ -20,6 +24,13 @@ class CartProvider with ChangeNotifier {
   }
 
   void addItem(FoodItem food) {
+    debugPrint('🛒 Cart: Adding item ${food.name} (${food.id})');
+    
+    if (food.id.isEmpty) {
+      debugPrint('⚠️ Cart Warning: Item ID is empty! Check API data.');
+      return;
+    }
+
     if (_items.containsKey(food.id)) {
       _items.update(
         food.id,
@@ -32,6 +43,7 @@ class CartProvider with ChangeNotifier {
       );
     }
     notifyListeners();
+    debugPrint('✅ Cart: Total items now: $itemCount');
   }
 
   void removeItem(String id) {
@@ -42,6 +54,11 @@ class CartProvider with ChangeNotifier {
   void clear() {
     _items.clear();
     notifyListeners();
+  }
+
+  void reset() {
+    _items.clear();
+    // No notifyListeners here as it's usually called during logout
   }
 
   Future<String?> placeOrder(String address, String shopId, {String paymentMethod = 'STRIPE'}) async {
@@ -64,7 +81,7 @@ class CartProvider with ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         clear();
-        return data['checkout_url']; // For Stripe redirection
+        return data['checkout_url'];
       }
     } catch (e) {
       debugPrint('Place order error: $e');
