@@ -13,7 +13,7 @@ from app.interfaces.api.schemas import (
 from app.core.security import get_password_hash, verify_password, create_access_token
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register/buyer", response_model=UserResponseSchema)
 async def register_buyer(

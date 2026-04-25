@@ -16,7 +16,8 @@ import {
   YoutubeOutlined,
   MenuOutlined,
   ShoppingCartOutlined,
-  StarFilled
+  StarFilled,
+  PlusOutlined
 } from '@ant-design/icons';
 import Link from 'next/link';
 import api from '@/lib/api';
@@ -30,7 +31,7 @@ export default function LandingPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { cart, setIsOpen } = useCart();
+  const { cart: cartItems, addToCart, setIsOpen } = useCart();
 
   useEffect(() => {
     const fetchLandingData = async () => {
@@ -75,7 +76,7 @@ export default function LandingPage() {
           </Title>
         </div>
         <Space size="middle">
-          <Badge count={cart.length} showZero offset={[0, 0]}>
+          <Badge count={cartItems.length} showZero offset={[0, 0]}>
             <Button 
               type="text" 
               icon={<ShoppingCartOutlined style={{ fontSize: 20 }} />} 
@@ -247,9 +248,18 @@ export default function LandingPage() {
                     <Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ fontSize: 15, marginBottom: 24, flex: 1 }}>
                       {item.description}
                     </Paragraph>
-                    <div style={{ marginTop: 'auto' }}>
-                      <Link href={`/buyer/item?id=${item.id}`}>
-                        <Button type="primary" block size="large" shape="round" icon={<ArrowRightOutlined />}>Order Now</Button>
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
+                      <Button 
+                        type="primary" 
+                        icon={<PlusOutlined />} 
+                        onClick={() => addToCart(item)}
+                        shape="round"
+                        style={{ flex: 1 }}
+                      >
+                        Add
+                      </Button>
+                      <Link href={`/buyer/item?id=${item.id}`} style={{ flex: 1 }}>
+                        <Button block shape="round">Details</Button>
                       </Link>
                     </div>
                   </Card>

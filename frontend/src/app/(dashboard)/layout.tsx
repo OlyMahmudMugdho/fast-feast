@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [role, setRole] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const { cart, setIsOpen } = useCart();
+  const { cart, setIsOpen, clearCart } = useCart();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -57,6 +57,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('userId');
+    clearCart(); // Isolation fix
     router.push('/login');
   };
 
@@ -85,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       baseItems.push(
         { key: '/buyer/dashboard', icon: <DashboardOutlined />, label: 'Browse' },
         { key: '/buyer/orders', icon: <ShoppingOutlined />, label: 'My Orders' },
-        { key: '/buyer/profile', icon: <UserOutlined />, label: 'Profile' }
+        { key: '/buyer/profile', icon: <UserOutlined />, label: 'Account Profile' }
       );
     }
     return baseItems;

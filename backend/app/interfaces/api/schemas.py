@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
-from app.domain.models import UserRole, OrderStatus
+from app.domain.models import UserRole, OrderStatus, PaymentMethod
 
 # Auth Schemas
 class LoginSchema(BaseModel):
@@ -32,6 +32,11 @@ class UserResponseSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    password: Optional[str] = None
 
 class ShopRegisterSchema(BaseModel):
     email: EmailStr
@@ -108,6 +113,7 @@ class OrderCreate(BaseModel):
     shop_id: UUID
     items: List[OrderItemCreate]
     delivery_address: str
+    payment_method: PaymentMethod = PaymentMethod.STRIPE
 
 class OrderItemResponse(BaseModel):
     food_item_id: UUID
@@ -125,7 +131,9 @@ class OrderResponse(BaseModel):
     total_amount: Decimal
     platform_fee: Decimal
     status: OrderStatus
+    payment_method: PaymentMethod
     delivery_address: str
+    checkout_url: Optional[str] = None
     created_at: datetime
     items: List[OrderItemResponse]
 
@@ -134,3 +142,6 @@ class OrderResponse(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
+
+class StripeOnboardResponse(BaseModel):
+    account_link_url: str

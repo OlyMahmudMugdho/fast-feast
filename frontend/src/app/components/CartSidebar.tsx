@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Drawer, List, Button, Typography, Space, Divider, Empty, message } from 'antd';
-import { ShoppingCartOutlined, PlusOutlined, MinusOutlined, CreditCardOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Drawer, List, Button, Typography, Space, Divider, Empty, message, Radio, Row, Col } from 'antd';
+import { ShoppingCartOutlined, PlusOutlined, MinusOutlined, CreditCardOutlined, DollarOutlined } from '@ant-design/icons';
 import { useCart } from '@/lib/CartContext';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ const { Title, Text } = Typography;
 
 export default function CartSidebar() {
   const { cart, removeFromCart, addToCart, total, isOpen, setIsOpen, clearCart } = useCart();
+  const [paymentMethod, setPaymentMethod] = useState<'STRIPE' | 'COD'>('STRIPE');
+  const [checkingOut, setCheckingOut] = useState(false);
   const router = useRouter();
 
   const handleCheckout = async () => {
@@ -24,19 +26,30 @@ export default function CartSidebar() {
       return;
     }
 
+    setCheckingOut(true);
     try {
       const orderData = {
         shop_id: cart[0].shop_id,
         delivery_address: "Default Address",
-        items: cart.map(i => ({ food_item_id: i.id, quantity: i.quantity }))
+        items: cart.map(i => ({ food_item_id: i.id, quantity: i.quantity })),
+        payment_method: paymentMethod
       };
-      await api.post('/orders', orderData);
-      message.success('Order placed successfully! (Cash on Delivery)');
-      clearCart();
-      setIsOpen(false);
-      router.push('/buyer/orders');
+      
+      const response = await api.post('/orders', orderData);
+      
+      if (response.data.checkout_url && paymentMethod === 'STRIPE') {
+        message.loading('Redirecting to secure payment...', 1.5);
+        window.location.href = response.data.checkout_url;
+      } else {
+        message.success('Order placed successfully! (Cash on Delivery)');
+        clearCart();
+        setIsOpen(false);
+        router.push('/buyer/orders');
+      }
     } catch (error) {
       message.error('Failed to place order');
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -88,28 +101,48 @@ export default function CartSidebar() {
             )}
           />
           
-          <div style={{ padding: '24px 0 0' }}>
-            <Divider />
+          <div style={{ padding: '24px 0 0', background: '#fff' }}>
+            <Divider style={{ margin: '0 0 16px' }}>Payment Method</Divider>
+            <Radio.Group 
+              onChange={(e) => setPaymentMethod(e.target.value)} 
+              value={paymentMethod}
+              style={{ width: '100%', marginBottom: 24 }}
+            >
+              <Row gutter={12}>
+                <Col span={12}>
+                  <Radio.Button value="STRIPE" style={{ width: '100%', height: 'auto', padding: '10px', textAlign: 'center' }}>
+                    <CreditCardOutlined style={{ fontSize: 18, display: 'block', marginBottom: 4 }} /><Text>Card</Text>
+                  </Radio.Button>
+                </Col>
+                <Col span={12}>
+                  <Radio.Button value="COD" style={{ width: '100%', height: 'auto', padding: '10px', textAlign: 'center' }}>
+                    <DollarOutlined style={{ fontSize: 18, display: 'block', marginBottom: 4 }} /><Text>Cash</Text>
+                  </Radio.Button>
+                </Col>
+              </Row>
+            </Radio.Group>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
               <Title level={4}>Total</Title>
               <Title level={4} style={{ color: '#ff4d4f' }}>${total.toFixed(2)}</Title>
             </div>
+            
             <Button 
               type="primary" 
               size="large" 
               block 
-              icon={<CreditCardOutlined />}
+              loading={checkingOut}
               onClick={handleCheckout}
               style={{ height: 50, borderRadius: 8 }}
             >
-              Checkout (CoD)
+              {paymentMethod === 'STRIPE' ? 'Pay Now' : 'Confirm Order (CoD)'}
             </Button>
-            <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginTop: 12, fontSize: 12 }}>
-              Pay in cash when your food arrives.
-            </Text>
           </div>
         </div>
       )}
     </Drawer>
   );
 }
+
+import { Typography as AntTypography } from 'antd';
+const { Text: AntText } = AntTypography;

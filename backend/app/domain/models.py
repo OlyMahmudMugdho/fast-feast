@@ -20,11 +20,16 @@ class ShopStatus(str, Enum):
 
 class OrderStatus(str, Enum):
     PENDING = "PENDING"
+    PAID = "PAID"
     CONFIRMED = "CONFIRMED"
     PREPARING = "PREPARING"
     OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
+
+class PaymentMethod(str, Enum):
+    STRIPE = "STRIPE"
+    COD = "COD"
 
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
@@ -93,7 +98,9 @@ class Order(SQLModel, table=True):
     total_amount: Decimal = Field(max_digits=10, decimal_places=2)
     platform_fee: Decimal = Field(default=0, max_digits=10, decimal_places=2)
     status: OrderStatus = Field(default=OrderStatus.PENDING)
+    payment_method: PaymentMethod = Field(default=PaymentMethod.STRIPE)
     delivery_address: str
+    stripe_session_id: Optional[str] = Field(default=None, unique=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     buyer: User = Relationship(back_populates="orders")

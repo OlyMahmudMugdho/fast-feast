@@ -27,23 +27,43 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Load cart from localStorage
+  // Sync userId from localStorage
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
+    const updateUserId = () => {
+      const storedId = localStorage.getItem('userId');
+      setUserId(storedId);
+    };
+
+    updateUserId();
+    window.addEventListener('storage', updateUserId);
+    return () => window.removeEventListener('storage', updateUserId);
   }, []);
 
-  // Save cart to localStorage
+  // Load cart from user-specific key
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    if (userId) {
+      const savedCart = localStorage.getItem(`cart_${userId}`);
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      } else {
+        setCart([]);
+      }
+    } else {
+      setCart([]);
+    }
+  }, [userId]);
+
+  // Save cart to user-specific key
+  useEffect(() => {
+    if (userId) {
+      localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
+    }
+  }, [cart, userId]);
 
   const addToCart = (item: any) => {
     setCart(prev => {
-      // Check if adding from a different shop
       if (prev.length > 0 && prev[0].shop_id !== item.shop_id) {
         message.warning('You can only order from one shop at a time. Clearing previous cart.');
         return [{ ...item, quantity: 1 }];
@@ -69,7 +89,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    if (userId) {
+      localStorage.removeItem(`cart_${userId}`);
+    }
+  };
 
   const total = cart.reduce((acc, curr) => acc + (parseFloat(curr.price) * curr.quantity), 0);
 

@@ -19,8 +19,15 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', values);
       const { access_token, role } = response.data;
       
+      // Fetch user profile to get ID
+      const profileRes = await api.get('/users/me', {
+          headers: { Authorization: `Bearer ${access_token}` }
+      });
+      const userId = profileRes.data.id;
+
       localStorage.setItem('token', access_token);
       localStorage.setItem('role', role);
+      localStorage.setItem('userId', userId);
       
       message.success('Welcome back!');
       

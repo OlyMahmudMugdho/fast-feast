@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Typography, Input, Space, Button, message, Empty, Spin, Tag, Tabs, Avatar } from 'antd';
-import { SearchOutlined, ShopOutlined, ArrowRightOutlined, AppstoreOutlined, FireOutlined } from '@ant-design/icons';
+import { SearchOutlined, ShopOutlined, ArrowRightOutlined, PlusOutlined, FireOutlined } from '@ant-design/icons';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { useCart } from '@/lib/CartContext';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -15,6 +16,7 @@ export default function BuyerDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('1');
+  const { addToCart } = useCart();
 
   const fetchData = async () => {
     setLoading(true);
@@ -91,8 +93,16 @@ export default function BuyerDashboard() {
                           }
                           style={{ borderRadius: 12, overflow: 'hidden' }}
                           actions={[
+                            <Button 
+                              type="primary" 
+                              icon={<PlusOutlined />} 
+                              onClick={() => addToCart(item)}
+                              shape="round"
+                            >
+                              Add
+                            </Button>,
                             <Link href={`/buyer/item?id=${item.id}`} key="view">
-                              <Button type="primary" shape="round">View Details</Button>
+                              <Button type="link">Details</Button>
                             </Link>
                           ]}
                         >

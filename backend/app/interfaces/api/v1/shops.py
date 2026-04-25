@@ -14,7 +14,7 @@ from app.core.security import get_password_hash
 from decimal import Decimal
 from uuid import UUID
 
-router = APIRouter()
+router = APIRouter(prefix="/shops", tags=["shops"])
 
 # Only Shop Owners or Employees can manage catalog (checking for Shop Owner for now as requested)
 shop_access_check = RoleChecker([UserRole.SHOP_OWNER, UserRole.SHOP_EMPLOYEE])
