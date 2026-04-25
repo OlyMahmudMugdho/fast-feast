@@ -4,7 +4,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     STRIPE_API_KEY: str
     STRIPE_WEBHOOK_SECRET: str
-    FRONTEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "https://fast-feast.onrender.com"
+    STRIPE_SUCCESS_URL: Optional[str] = None
+    STRIPE_CANCEL_URL: Optional[str] = None
     CLOUDINARY_URL: str
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"

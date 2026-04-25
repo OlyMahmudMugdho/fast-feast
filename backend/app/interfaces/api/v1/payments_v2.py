@@ -199,8 +199,8 @@ async def create_subscription_session(
                 "line_items": [
                     {'price': price_id, 'quantity': 1},
                 ],
-                "success_url": f"{settings.FRONTEND_URL}/shop/dashboard?subscription=success",
-                "cancel_url": f"{settings.FRONTEND_URL}/shop/dashboard?subscription=cancel",
+                "success_url": settings.STRIPE_SUCCESS_URL or f"{settings.FRONTEND_URL}/shop/dashboard?subscription=success",
+                "cancel_url": settings.STRIPE_CANCEL_URL or f"{settings.FRONTEND_URL}/shop/dashboard?subscription=cancel",
             }
         )
         return {"url": checkout_session.url}

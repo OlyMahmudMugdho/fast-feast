@@ -120,8 +120,8 @@ async def create_order(
                 'payment_method_types': ['card'],
                 'line_items': line_items,
                 'mode': 'payment',
-                'success_url': f"{settings.FRONTEND_URL}/buyer/orders?success=true",
-                'cancel_url': f"{settings.FRONTEND_URL}/buyer/dashboard?canceled=true",
+                'success_url': settings.STRIPE_SUCCESS_URL or f"{settings.FRONTEND_URL}/buyer/orders?success=true",
+                'cancel_url': settings.STRIPE_CANCEL_URL or f"{settings.FRONTEND_URL}/buyer/dashboard?canceled=true",
             }
             
             request_options = {}
