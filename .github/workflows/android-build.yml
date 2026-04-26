@@ -34,6 +34,14 @@ jobs:
         run: flutter pub get
         working-directory: mobile
 
+      - name: Generate App Icons
+        run: dart run flutter_launcher_icons
+        working-directory: mobile
+
+      - name: Generate Splash Screen
+        run: dart run flutter_native_splash:create
+        working-directory: mobile
+
       - name: Check for errors
         run: flutter analyze
         working-directory: mobile
