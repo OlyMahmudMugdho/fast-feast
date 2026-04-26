@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/cart_provider.dart';
 
 class CartScreen extends StatefulWidget {
@@ -41,12 +42,23 @@ class _CartScreenState extends State<CartScreen> {
 
     if (mounted) {
       if (_paymentMethod == 'STRIPE' && checkoutUrl != null) {
-        // In a real app, use url_launcher or webview_flutter to open checkoutUrl
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order placed! Redirecting to Stripe (simulated)')),
-        );
-        Navigator.pop(context);
-        Navigator.pushNamed(context, '/orders');
+        final uri = Uri.parse(checkoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Redirecting to Stripe...')),
+            );
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/orders');
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open Stripe checkout.')),
+            );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order placed successfully!')),

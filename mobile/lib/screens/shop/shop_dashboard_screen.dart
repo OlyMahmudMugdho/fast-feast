@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 
 class ShopDashboardScreen extends StatefulWidget {
@@ -35,6 +36,36 @@ class _ShopDashboardScreenState extends State<ShopDashboardScreen> {
       }
     } catch (e) {
       debugPrint('Shop Dashboard Error: $e');
+    }
+  }
+
+  Future<void> _handleOnboarding() async {
+    setState(() { _isLoading = true; });
+    try {
+      // 1. Ensure account exists
+      if (_shopData?['stripe_account_id'] == null) {
+        await _apiClient.post('/payments/v2/accounts', {});
+      }
+
+      // 2. Get onboarding link
+      final res = await _apiClient.post('/payments/v2/onboard-link', {});
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final url = data['url'];
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      }
+    } catch (e) {
+      debugPrint('Onboarding Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to start onboarding. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
     }
   }
 
@@ -114,7 +145,7 @@ class _ShopDashboardScreenState extends State<ShopDashboardScreen> {
           ),
           const SizedBox(height: 12),
           ElevatedButton(
-            onPressed: () {}, // Link to onboarding would go here
+            onPressed: _handleOnboarding,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
             child: const Text('Complete Onboarding'),
           )
