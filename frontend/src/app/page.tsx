@@ -25,8 +25,7 @@ const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
 export default function Home() {
-  const [shops, setShops] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
   const { cart, setIsOpen, clearCart } = useCart();
@@ -38,12 +37,8 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        const [shopsRes, catsRes] = await Promise.all([
-          api.get('/public/shops'),
-          api.get('/public/categories')
-        ]);
-        setShops(shopsRes.data.slice(0, 4));
-        setCategories(catsRes.data.slice(0, 6));
+        const itemsRes = await api.get('/public/items');
+        setItems(itemsRes.data.slice(0, 8));
       } catch (error) {
         console.error('Failed to fetch landing data');
       } finally {
@@ -201,57 +196,34 @@ export default function Home() {
           </Row>
         </div>
 
-        {/* Categories */}
-        <div style={{ padding: '80px clamp(16px, 5vw, 120px)' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <Title level={2}>Popular Categories</Title>
-            <Text type="secondary">Explore various cuisines and dishes</Text>
-          </div>
-          <Row gutter={[24, 24]}>
-            {categories.map((cat, idx) => (
-              <Col xs={12} md={8} lg={4} key={idx}>
-                <Card 
-                  hoverable 
-                  style={{ textAlign: 'center', borderRadius: 20, border: '1px solid #f0f0f0' }}
-                  bodyStyle={{ padding: 24 }}
-                  onClick={() => router.push(`/buyer/dashboard?category=${cat.id}`)}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>🍔</div>
-                  <Text strong>{cat.name}</Text>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </div>
-
-        {/* Featured Shops */}
-        <div style={{ padding: '40px clamp(16px, 5vw, 120px) 100px', background: '#fafafa' }}>
+        {/* Featured Dishes */}
+        <div style={{ padding: '80px clamp(16px, 5vw, 120px)', background: '#fafafa' }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
               <div>
-                <Title level={2} style={{ margin: 0 }}>Featured Restaurants</Title>
-                <Text type="secondary">Handpicked places with top quality food</Text>
+                <Title level={2} style={{ margin: 0 }}>Featured Dishes</Title>
+                <Text type="secondary">Handpicked favorites delivered to your door</Text>
               </div>
               <Link href="/buyer/dashboard">
-                <Button type="link" style={{ color: '#ff4d4f', fontWeight: 600 }}>View All <ArrowRightOutlined /></Button>
+                <Button type="link" style={{ color: '#ff4d4f', fontWeight: 600 }}>Explore More <ArrowRightOutlined /></Button>
               </Link>
            </div>
            <Row gutter={[24, 24]}>
-             {shops.map((shop, idx) => (
-               <Col xs={24} sm={12} lg={6} key={idx}>
+             {items.map((item, idx) => (
+               <Col xs={24} sm={12} md={8} lg={6} key={idx}>
                  <Card 
                   hoverable 
-                  cover={<img alt={shop.name} src={shop.logo_url || `https://picsum.photos/seed/${shop.id}/400/250`} style={{ height: 200, objectFit: 'cover' }} />}
+                  cover={<img alt={item.name} src={item.image_url || `https://picsum.photos/seed/${item.id}/400/250`} style={{ height: 200, objectFit: 'cover' }} />}
                   style={{ borderRadius: 16, overflow: 'hidden', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
-                  onClick={() => router.push(`/buyer/shop?id=${shop.id}`)}
+                  onClick={() => router.push(`/buyer/dashboard?item=${item.id}`)}
                  >
                    <Card.Meta 
-                    title={shop.name} 
+                    title={item.name} 
                     description={
                       <Space direction="vertical" size={4} style={{ width: '100%' }}>
-                        <Text type="secondary"><EnvironmentOutlined /> {shop.address.slice(0, 30)}...</Text>
+                        <Text type="secondary">{item.description?.slice(0, 60)}...</Text>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                          <Tag color="green">4.8 <StarFilled style={{ fontSize: 10 }} /></Tag>
-                          <Text strong style={{ color: '#ff4d4f' }}>20-30 min</Text>
+                          <Text strong style={{ color: '#ff4d4f', fontSize: 18 }}>${item.price}</Text>
+                          <Tag color="orange">{item.category?.name || 'Popular'}</Tag>
                         </div>
                       </Space>
                     }

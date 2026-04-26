@@ -19,18 +19,20 @@ app = FastAPI(title="Fast-Feast API", lifespan=lifespan)
 # Essential for Flutter Web and Mobile Apps connecting to local backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost",
-        "http://localhost:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1",
-        "http://127.0.0.1:8000",
-        "*", # Allow all for development flexibility
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False, # Must be False if allow_origins is ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global Exception Handler to ensure CORS headers on 500 errors
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "message": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
 
 # API Routes
 app.include_router(api_router, prefix="/api/v1")
