@@ -207,9 +207,9 @@ export default function Home() {
                 <Button type="link" style={{ color: '#ff4d4f', fontWeight: 600 }}>Explore More <ArrowRightOutlined /></Button>
               </Link>
            </div>
-           <Row gutter={[24, 24]}>
+           <Row gutter={[24, 24]} justify="center">
              {items.map((item, idx) => (
-               <Col xs={24} sm={12} md={8} lg={6} key={idx}>
+               <Col xs={24} sm={12} md={12} lg={8} key={idx}>
                  <Card 
                   hoverable 
                   cover={<img alt={item.name} src={item.image_url || `https://picsum.photos/seed/${item.id}/400/250`} style={{ height: 200, objectFit: 'cover' }} />}
