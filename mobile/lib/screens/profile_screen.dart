@@ -100,59 +100,159 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildGuestView(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 64), 
-              Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1), 
-                  shape: BoxShape.circle,
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.only(top: 80, bottom: 40, left: 32, right: 32),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
-                child: const Icon(Icons.account_circle_outlined, size: 90, color: Colors.redAccent),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 20,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 40),
-              const Text(
-                'Your Profile', 
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1.5)
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.redAccent.withOpacity(0.1), width: 2),
+                    ),
+                    child: const Icon(Icons.person_outline_rounded, size: 80, color: Colors.redAccent),
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Join Fast Feast',
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A), letterSpacing: -1),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Sign in to unlock the full experience and enjoy seamless food delivery.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey, height: 1.5),
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pushNamed(context, '/login'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        elevation: 8,
+                        shadowColor: Colors.redAccent.withOpacity(0.4),
+                      ),
+                      child: const Text('Login or Create Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Log in to see your orders, manage addresses, and unlock personalized features.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey, height: 1.6),
-              ),
-              const SizedBox(height: 64),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, '/login'),
-                  icon: const Icon(Icons.login_rounded),
-                  label: const Text('LOGIN / REGISTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    elevation: 0,
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(32),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const Text(
+                  'Exclusive Benefits',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                ),
+                const SizedBox(height: 20),
+                _buildBenefitCard(
+                  context,
+                  'Real-time Tracking',
+                  'Watch your food arrive with live GPS tracking from kitchen to your door.',
+                  Icons.map_outlined,
+                  Colors.blue,
+                ),
+                _buildBenefitCard(
+                  context,
+                  'Seamless Payments',
+                  'Save your preferred payment methods for a faster, one-click checkout.',
+                  Icons.payment_outlined,
+                  Colors.green,
+                ),
+                _buildBenefitCard(
+                  context,
+                  'Order History',
+                  'Easily reorder your favorite meals with just a single tap.',
+                  Icons.history_rounded,
+                  Colors.orange,
+                ),
+                const SizedBox(height: 32),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/home'),
+                    child: Text(
+                      'Continue Browsing as Guest',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/home'),
-                child: const Text('Continue Browsing as Guest', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 48), // Large bottom spacing to ensure clearance
-            ],
+                const SizedBox(height: 40),
+              ]),
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitCard(BuildContext context, String title, String description, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

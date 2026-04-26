@@ -34,7 +34,7 @@ class LandingScreen extends StatelessWidget {
           
           // Content
           SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,19 +58,22 @@ class LandingScreen extends StatelessWidget {
                         child: const Icon(Icons.restaurant_menu, color: Colors.white, size: 28),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Fast Feast',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                      const Expanded(
+                        child: Text(
+                          'Fast Feast',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                   
-                  const Spacer(),
+                  const SizedBox(height: 100), // Fixed height instead of spacer for scroll view
                   
                   // Value Proposition
                   const Text(

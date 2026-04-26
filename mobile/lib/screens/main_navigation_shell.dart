@@ -108,22 +108,22 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             _getAppTitle(currentRole), 
             style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, letterSpacing: -0.5)
           ),
-          actions: [
-            if (!currentRole.contains('ADMIN') && !currentRole.contains('SHOP')) IconButton(
-              icon: Badge(
-                label: Text('${cart.itemCount}'), 
-                isLabelVisible: cart.itemCount > 0, 
-                child: const Icon(Icons.shopping_cart_outlined)
-              ),
-              onPressed: () => Navigator.pushNamed(context, '/cart'),
-            ),
-            const SizedBox(width: 8),
-          ],
         ),
         body: IndexedStack(
           index: safeIndex,
           children: tabs,
         ),
+        floatingActionButton: (!currentRole.contains('ADMIN') && !currentRole.contains('SHOP'))
+            ? FloatingActionButton(
+                onPressed: () => Navigator.pushNamed(context, '/cart'),
+                backgroundColor: primaryColor,
+                child: Badge(
+                  label: Text('${cart.itemCount}'),
+                  isLabelVisible: cart.itemCount > 0,
+                  child: const Icon(Icons.shopping_cart, color: Colors.white),
+                ),
+              )
+            : null,
         bottomNavigationBar: NavigationBar(
           backgroundColor: Colors.white,
           indicatorColor: primaryColor.withOpacity(0.1),
