@@ -27,6 +27,7 @@ class UserResponseSchema(BaseModel):
     email: EmailStr
     full_name: str
     role: UserRole
+    phone: Optional[str] = None
     is_active: bool
     created_at: datetime
 
